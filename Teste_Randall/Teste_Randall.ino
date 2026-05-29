@@ -12,8 +12,8 @@ const int out = 41;
 
 //Pinos do led RGB
 int Pin_RED = 3;
-int Pin_GREEN = 2;
-int Pin_BLUE = 4;
+int Pin_GREEN = 9;
+int Pin_BLUE = 7;
 
 //Variaveis cores
 int red = 0;
