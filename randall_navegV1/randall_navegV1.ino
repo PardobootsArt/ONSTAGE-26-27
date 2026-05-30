@@ -1,4 +1,4 @@
-  const int s0 = 40;
+const int s0 = 40;
 const int s1 = 42;
 const int s2 = 44;
 const int s3 = 46;
@@ -35,20 +35,21 @@ int distFrente;
 long durationT;
 int distTras;
 
-float Kp = 5.0;
+float Kp = 8.0;
+float Kd = 5.0;
 
-int velocidadeBase = 60;
+int velocidadeBase = 50;
 
-int distBase = 10;
+int distBase = 7;
 
 void setup() {
   // put your setup code here, to run once:
-  pinMode (motorE1, OUTPUT);
-  pinMode (motorE2, OUTPUT);
-  pinMode (motorD1, OUTPUT);
-  pinMode (motorD2, OUTPUT);
-  pinMode (enbE, OUTPUT);
-  pinMode (enbD, OUTPUT);
+  pinMode(motorE1, OUTPUT);
+  pinMode(motorE2, OUTPUT);
+  pinMode(motorD1, OUTPUT);
+  pinMode(motorD2, OUTPUT);
+  pinMode(enbE, OUTPUT);
+  pinMode(enbD, OUTPUT);
 
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
@@ -68,11 +69,10 @@ void setup() {
   digitalWrite(s0, HIGH);
   digitalWrite(s1, LOW);
 
-  digitalWrite (motorE1, HIGH);
-  digitalWrite (motorE2, LOW);
-  digitalWrite (motorD1, HIGH);
-  digitalWrite (motorD2, LOW);
-
+  digitalWrite(motorE1, HIGH);
+  digitalWrite(motorE2, LOW);
+  digitalWrite(motorD1, HIGH);
+  digitalWrite(motorD2, LOW);
 }
 
 void loop() {
@@ -86,23 +86,23 @@ void loop() {
     Serial.print(" Verde : ");
     Serial.print(green, DEC);
     Serial.print(" Azul : ");
-    Serial.print(blue, DEC);
-    Serial.println();
-    Serial.println("Procurando Verde");
+    Serial.println(blue, DEC);
     AcenderLed(175, 0, 255);
 
     //motores
-    distFrente = calDistanciaF ();
-    distTras = calDistanciaT ();
+    distFrente = calDistanciaF();
+    distTras = calDistanciaT();
 
+    int ultimoErro;
+    int erroF = (distFrente - distBase);
+    int erroT = (distTras - distBase);
+    int erro = (erroF + erroT);
+    int correcaoP = Kp * erro;
+    int correcaoD = Kd * (ultimoErro - erro);
+    int correcaoFinal = correcaoP + correcaoD;
 
-   int erroF = (distFrente - distBase);   
-   int erroT = (distTras - distBase);
-   int erro = (erroF + erroT);
-   int correcao = Kp * erro;
-
-    int velEsq = velocidadeBase - correcao;
-    int velDir = velocidadeBase + correcao;
+    int velEsq = velocidadeBase + correcaoFinal;
+    int velDir = velocidadeBase - correcaoFinal;
 
     velEsq = constrain(velEsq, 0, 255);
     velDir = constrain(velDir, 0, 255);
@@ -113,34 +113,31 @@ void loop() {
     Serial.print("Erro: ");
     Serial.print(erro);
 
-   Serial.print("  Esq: ");
-   Serial.print(velEsq);
+    Serial.print("  Dir: ");
+    Serial.print(velEsq);
 
-   Serial.print("  Dir: ");
+    Serial.print("  Esq: ");
     Serial.println(velDir);
 
-    delay(10);
-    if (green > 300 && green < 500 && red > 800 && green < blue) {
-      camuflagemRandall = true;
-      Serial.println("Iniciando Camuflagem Randall...");
-      delay(50);
-      digitalWrite (motorE1, LOW);
-      digitalWrite (motorE2, LOW);
-      digitalWrite (motorD1, LOW);
-      digitalWrite (motorD2, LOW);
-      delay (500);
-      analogWrite (enbE, 200);
-      analogWrite (enbD, 200);
-      digitalWrite (motorE1, HIGH);
-      digitalWrite (motorE2, LOW);
-      digitalWrite (motorD1, LOW);
-      digitalWrite (motorD2, HIGH);
+    ultimoErro = erro;
 
-      delay (1000);
-      digitalWrite (motorE1, LOW);
-      digitalWrite (motorE2, LOW);
-      digitalWrite (motorD1, LOW);
-      digitalWrite (motorD2, LOW);
+
+
+    if (green > 230 && green < 400 && red > 350 && green < blue) {
+      camuflagemRandall = true;
+      AcenderLed(0, 255, 0);
+      Serial.println("Iniciando Camuflagem Randall...");
+      delay(150);
+      AcenderLed(175, 0, 255);
+      digitalWrite(motorE1, LOW);
+      digitalWrite(motorE2, LOW);
+      digitalWrite(motorD1, LOW);
+      digitalWrite(motorD2, LOW);
+      delay(1000);
+      digitalWrite(motorE1, HIGH);
+      digitalWrite(motorE2, LOW);
+      digitalWrite(motorD1, HIGH);
+      digitalWrite(motorD2, LOW);
     }
   }
 
@@ -154,18 +151,51 @@ void loop() {
     Serial.print(blue, DEC);
     Serial.println();
 
+    //motores
+    distFrente = calDistanciaF();
+    distTras = calDistanciaT();
+
+    int ultimoErro;
+    int erroF = (distFrente - distBase);
+    int erroT = (distTras - distBase);
+    int erro = (erroF + erroT);
+    int correcaoP = Kp * erro;
+    int correcaoD = Kd * (ultimoErro - erro);
+    int correcaoFinal = correcaoP + correcaoD;
+
+    int velEsq = velocidadeBase + correcaoFinal;
+    int velDir = velocidadeBase - correcaoFinal;
+
+    velEsq = constrain(velEsq, 0, 255);
+    velDir = constrain(velDir, 0, 255);
+
+    analogWrite(enbE, velEsq);
+    analogWrite(enbD, velDir);
+
+    Serial.print("Erro: ");
+    Serial.print(erro);
+
+    Serial.print("  Dir: ");
+    Serial.print(velEsq);
+
+    Serial.print("  Esq: ");
+    Serial.println(velDir);
+
+    ultimoErro = erro;
+
+
     //Verifica se a cor branca foi detectada
     if (red < 100 && green < 100 && blue < 100) {
       Serial.println("BRANCO");
       AcenderLed(175, 0, 255);
     }
     //Verifica se a cor amarela foi detectada
-    else if (red < 60 && green < 100 && green < blue) {
+    else if (red < 80 && green < 100 && green < blue) {
       Serial.println("AMARELO");
       AcenderLed(255, 110, 0);
     }
     //Verifica se a cor vermelha foi detectada
-    else if (red < blue && blue < green && red < 100) {
+    else if (red < blue && blue < green && red < 200) {
       Serial.println("VERMELHO");
       AcenderLed(255, 0, 0);
     }
@@ -175,14 +205,9 @@ void loop() {
       Serial.println("AZUL");
       AcenderLed(0, 0, 255);
     }
-
   }
+  delay(100);
   Serial.println();
-
-  //Delay para apagar os leds e reiniciar o processo
-  delay(300);
-
-  
 }
 
 
@@ -205,36 +230,34 @@ void AcenderLed(int R, int G, int B) {
   analogWrite(Pin_GREEN, G);
   analogWrite(Pin_BLUE, B);
 }
-  
+
 
 
 int calDistanciaF() {
 
-    digitalWrite(trigPin, LOW);
-    delayMicroseconds(2);
-    // Define o trigPin no estado HIGH por 10 micro segundos
-    digitalWrite(trigPin, HIGH);
-    delayMicroseconds(10);
-    digitalWrite(trigPin, LOW);
-    durationF = pulseIn(echoPin, HIGH);  // Lê o echoPin, retorna o tempo de viagem da onda sonora em microssegundos
-    distFrente = durationF * 0.034 / 2;
-    return distFrente;
-  }
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  // Define o trigPin no estado HIGH por 10 micro segundos
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  durationF = pulseIn(echoPin, HIGH);  // Lê o echoPin, retorna o tempo de viagem da onda sonora em microssegundos
+  distFrente = durationF * 0.034 / 2;
+  return distFrente;
+}
 
-  int calDistanciaT() {
+int calDistanciaT() {
 
-    digitalWrite(trigPin2, LOW);
-    delayMicroseconds(2);
-    // Define o trigPin no estado HIGH por 10 micro segundos
-    digitalWrite(trigPin2, HIGH);
-    delayMicroseconds(10);
-    digitalWrite(trigPin2, LOW);
-    durationT = pulseIn(echoPin2, HIGH);  // Lê o echoPin, retorna o tempo de viagem da onda sonora em microssegundos
-    distTras = durationT * 0.034 / 2;
-    return distTras;
-  }
-
-
+  digitalWrite(trigPin2, LOW);
+  delayMicroseconds(2);
+  // Define o trigPin no estado HIGH por 10 micro segundos
+  digitalWrite(trigPin2, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin2, LOW);
+  durationT = pulseIn(echoPin2, HIGH);  // Lê o echoPin, retorna o tempo de viagem da onda sonora em microssegundos
+  distTras = durationT * 0.034 / 2;
+  return distTras;
+}
 
 
 
@@ -252,4 +275,6 @@ int calDistanciaF() {
 
 
 
-// 
+
+
+//
