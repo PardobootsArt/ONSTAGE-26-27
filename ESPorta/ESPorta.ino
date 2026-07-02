@@ -1,7 +1,7 @@
 #include <esp_now.h>
 #include <WiFi.h>
 
-HardwareSerial MegaSerial(2);
+HardwareSerial UnoSerial(2);
 
 typedef struct{
   int comando;
@@ -17,7 +17,7 @@ uint8_t robo2[] = {0x3c,0x71,0xbf,0x45,0x96,0x94};
 
 void setup(){
 
-  MegaSerial.begin(115200,SERIAL_8N1,16,17);
+  UnoSerial.begin(115200,SERIAL_8N1,16,17);
 
   WiFi.mode(WIFI_STA);
 
@@ -37,9 +37,9 @@ void setup(){
 
 void loop(){
 
-  if(MegaSerial.available()){
+  if(UnoSerial.available()){
 
-    msg.comando = MegaSerial.parseInt();
+    msg.comando = UnoSerial.parseInt();
 
     esp_now_send(robo1,(uint8_t*)&msg,sizeof(msg));
 
