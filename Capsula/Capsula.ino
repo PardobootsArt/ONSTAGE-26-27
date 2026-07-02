@@ -1,32 +1,32 @@
 // HC-SR04
 const int pinLed[] = {
-  12,
-  3,
-  11,
-  34,
-  13,
+  25,
   26,
-  8,
-  32,
-  9,
-  22,
-  10,
-  38,
-  7,
+  27,
   28,
-  6,
-  24,
-  5,
-  2,
-  4,
+  29,
+  30,
+  31,
+  32,
+  33,
+  34,
+  35,
   36,
+  37,
+  38,
+  39,
+  40,
+  41,
+  42,
+  43,
+  44,
 
 };
 
 const int totalLeds = sizeof(pinLed) / sizeof(pinLed[0]);
 
-const int trigPin = 42;
-const int echoPin = 44;
+const int trigPin = 50;
+const int echoPin = 51;
 float distancia;
 bool estadoLed;
 
@@ -41,6 +41,7 @@ void setup() {
     digitalWrite(pinLed[i], LOW);
   }
 
+
   estadoLed = false;
 }
 
@@ -50,7 +51,6 @@ void loop() {
   Serial.print("Distancia: ");
   Serial.print(distancia);
   Serial.println(" cm");
-
   if (distancia < 10) {
     estadoLed = !estadoLed;
     Serial.print(estadoLed);
