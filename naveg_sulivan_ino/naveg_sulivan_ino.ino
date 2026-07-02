@@ -426,42 +426,9 @@ void loop() {
 
     int comando = ESP.parseInt();
 
-    if (comando == 1) {   
-      delay(2500);
-      esquerda(100, 40);
-      delay(1000);
-      frente(80, 100);
-      delay(1000);
-
-      int contagemObjeto = 0;
-      while (contagemObjeto < 3) {
-
-        int grauss = procurarObjeto();
-        int time = calcularTempo(grauss);
-        if (grauss != -1) {
-          if (grauss < 90) {
-            //objeto na esquerda, ir para direita
-            direita(70, time);
-            delay(200);
-            frente(80, 23);
-            contagemObjeto += 1;
-            delay(1000);
-          }
-
-          if (grauss > 90) {
-            //objeto na direita, ir para esquerda
-            esquerda(70, time);
-            delay(200);
-            frente(80, 23);
-            contagemObjeto += 1;
-            delay(1000);
-          }
-        } else if (varreduraCompleta) {
-          frente(80, 10);
-          varreduraCompleta = false;
-        }
-      }
-      delay(2000);
+    if (comando == 1) {
+      frente(100, 40);
+      delay (1000);
     }
   }
 }

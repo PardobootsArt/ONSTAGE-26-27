@@ -258,23 +258,3 @@ int calDistanciaT() {
   distTras = durationT * 0.034 / 2;
   return distTras;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//
