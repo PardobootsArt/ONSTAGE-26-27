@@ -23,7 +23,7 @@ float distance;
 bool objetoDetectado = false;
 
 void setup() {
-  espSerial.begin (115200);
+  espSerial.begin (9600);
 
   // Inicia a comunicação com o Monitor Serial
   Serial.begin(9600);
@@ -79,6 +79,7 @@ void loop() {
   // 2. Ainda não tiver sido detectado anteriormente
   if (distance < 10 && objetoDetectado == false) {
     espSerial.println (1);
+    Serial.println ("enviado: 1");
     // Marca que o objeto já foi detectado
     // Assim o motor não será acionado novamente
     objetoDetectado = true;
