@@ -1,5 +1,4 @@
 #include <SoftwareSerial.h>
-SoftwareSerial espSerial (5,6);
 
 
 // Pinos do sensor ultrassônico
@@ -23,7 +22,6 @@ float distance;
 bool objetoDetectado = false;
 
 void setup() {
-  espSerial.begin (115200);
 
   // Inicia a comunicação com o Monitor Serial
   Serial.begin(9600);
@@ -70,15 +68,11 @@ void loop() {
   // Calcula a distância em centímetros
   distance = duration * 0.034 / 2;
 
-  // Mostra a distância no Monitor Serial
-  Serial.print("Distancia: ");
-  Serial.println(distance);
-
   // Executa somente se:
   // 1. O objeto estiver a menos de 10 cm
   // 2. Ainda não tiver sido detectado anteriormente
   if (distance < 10 && objetoDetectado == false) {
-    espSerial.println (1);
+    Serial.println (1);
     // Marca que o objeto já foi detectado
     // Assim o motor não será acionado novamente
     objetoDetectado = true;
@@ -100,9 +94,6 @@ void loop() {
     digitalWrite(IN1, LOW);
     digitalWrite(IN2, LOW);
     analogWrite(ENB, 0);
-
-    // Mensagem para confirmar a execução
-    Serial.println("Objeto detectado. Motor acionado uma unica vez.");
   }
 
   // Pequena pausa antes da próxima leitura

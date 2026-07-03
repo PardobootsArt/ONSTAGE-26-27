@@ -426,7 +426,7 @@ void loop() {
 
     int comando = ESP.parseInt();
 
-    if (comando < 1) {
+    if (comando >= 1) {
       frente(100, 40);
       delay (1000);
     }
