@@ -2,6 +2,9 @@ import cv2
 import math
 import numpy as np
 from pyapriltags import Detector
+import serial
+import serial.tools.list_ports
+import time
 
 # 1. INICIALIZA O DETECTOR DE APRILTAGS DO PC
 # (Especificamos a família padrão: tag36h11)
@@ -13,6 +16,45 @@ at_detector = Detector(families='tag36h11',
                        decode_sharpening=0.25,
                        debug=0)
 
+# -----------------------------
+# Procura automaticamente o Arduino
+# -----------------------------
+def encontrar_arduino():
+    """
+    Procura automaticamente uma porta que contenha
+    'Arduino' ou 'CH340' (muitos Arduinos genéricos usam CH340).
+    """
+
+    portas = serial.tools.list_ports.comports()
+
+    for porta in portas:
+        if "Arduino" in porta.description or "CH340" in porta.description:
+            return porta.device
+
+    return None
+
+
+porta_arduino = encontrar_arduino()
+
+if porta_arduino:
+
+    arduino = serial.Serial(porta_arduino, 9600)
+
+    # Sempre esperamos alguns segundos.
+    # Quando abrimos a Serial, o Arduino reinicia.
+    time.sleep(2)
+
+    print(f"Arduino conectado em {porta_arduino}")
+
+else:
+
+    porta_manual = input("Arduino não encontrado. Digite a porta COM: ")
+
+    arduino = serial.Serial(porta_manual,9600)
+
+    time.sleep(2)
+
+    print(f"Arduino conectado em {porta_manual}")
 # 2. INICIALIZA A WEBCAM
 # O argumento '0' geralmente é a webcam integrada do notebook
 cap = cv2.VideoCapture(0)
@@ -50,10 +92,9 @@ while True:
         # Desenha a cruz verde no centro (Equivalente ao draw_cross)
         cv2.drawMarker(frame, (cx, cy), (0, 255, 0), cv2.MARKER_CROSS, 15, 2)
 
-        if tag.tag_id == 1:
+        if tag.tag_id == 0:
             tag_detectada = True
-            
-            # Calcula largura e altura aproximadas com base nos cantos
+
             tagWidth = np.linalg.norm(corners[0] - corners[1])
             tagHeight = np.linalg.norm(corners[1] - corners[2])
             
@@ -65,26 +106,54 @@ while True:
             
             # Desenha o círculo azul no centro da tela
             cv2.circle(frame, (centro_tela_x, centro_tela_y), 6, (255, 144, 30), -1)
+
+            # ==========================================================
+            # CÁLCULO DOS ERROS
+
+            # Erro horizontal.
+            erro_x = cx - centro_tela_x
+
+            # Distância desejada.
+            DISTANCIA_DESEJADA = 180
+
+            # Erro de distância.
+            erro_distancia = DISTANCIA_DESEJADA - tagLength
             
-            # --- LÓGICA DOS MOTORES NO SERIAL ---
-            tolerancia = 25  # Maior porque a resolução da webcam é maior
-            print("\n--------------------------------------------------")
-            print(f"Tag 0 Detectada -> Centro X: {cx} | Distância Relativa: {tagLength:.1f}")
+            print("TAG 0")
+            mensagem = f"{tag.tag_id},{erro_x},{erro_distancia:.2f}\n"
+            arduino.write(mensagem.encode())
+
+            print("-------------------------------------")
+            print("Mensagem enviada ao Arduino:")
+
+            print(mensagem.strip())
+
+            print("-------------------------------------")
+
+        elif tag.tag_id == 1:
+            tag_detectada = True
             
-            if cx < (centro_tela_x - tolerancia):
-                print("[AÇÃO] Virar para a ESQUERDA 🔄")
-                print("[MOTORES] Motor Direito: LIGADO [>>] | Motor Esquerdo: DESLIGADO [..]")
-            elif cx > (centro_tela_x + tolerancia):
-                print("[AÇÃO] Virar para a DIREITA 🔄")
-                print("[MOTORES] Motor Esquerdo: LIGADO [>>] | Motor Direito: DESLIGADO [..]")
-            else:
-                print("[AÇÃO] Alinhado! Seguir em Frente ⬆️")
-                print("[MOTORES] Motor Esquerdo: LIGADO [>>] | Motor Direito: LIGADO [>>]")
-            print("--------------------------------------------------")
+            print("TAG 1")
+            arduino.write(b'1')
+
+        elif tag.tag_id == 2:
+            tag_detectada = True
+            
+            print("TAG 2")
+            arduino.write(b'2')
+
+        elif tag.tag_id == 3:
+            tag_detectada = True
+            
+            print("TAG 3")
+            arduino.write(b'3')
+    
             
 
     if not tag_detectada:
-        print("[STATUS] Procurando Tag ID 0... | [MOTORES] PARADOS [..] [..]")
+        mensagem = "-1,0,0\n"
+        arduino.write(mensagem.encode())
+        print("Nenhuma tag detectada.")
 
     # Mostra a imagem na janela do computador
     cv2.imshow("Rastreamento de Tag", frame)
