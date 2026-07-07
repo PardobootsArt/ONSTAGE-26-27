@@ -1,79 +1,72 @@
-#include <esp_now.h>
 #include <WiFi.h>
-
-<<<<<<< HEAD
-typedef struct{
-=======
-HardwareSerial UnoSerial(2);
+#include <esp_now.h>
 
 typedef struct {
->>>>>>> 144595b170fda105e5ed985ca7366ca09a096358
   int comando;
 } Mensagem;
 
 Mensagem msg;
-// MAC do Robô 1
+
 uint8_t robo1[] = { 0x3c, 0x71, 0xbf, 0xd0, 0x62, 0x74 };
 
-<<<<<<< HEAD
 const int led = 2;
+
+void OnDataSent(const wifi_tx_info_t *info, esp_now_send_status_t status) {
+
+  if (status == ESP_NOW_SEND_SUCCESS){
+    Serial.println("Enviado com sucesso");
+  }else{
+    Serial.println("Falha no envio");
+  }
+}
+
 void setup() {
-  pinMode (led, OUTPUT);
+
+  Serial.begin(9600);
+
   Serial2.begin(9600, SERIAL_8N1, 16, 17);
-=======
-// MAC do Robô 2
-uint8_t robo2[] = { 0x3c, 0x71, 0xbf, 0x45, 0x96, 0x94 };
 
-void setup() {
-  Serial.begin (9600);
-
-  UnoSerial.begin(9600, SERIAL_8N1, 16, 17);
->>>>>>> 144595b170fda105e5ed985ca7366ca09a096358
+  pinMode(led, OUTPUT);
 
   WiFi.mode(WIFI_STA);
 
-  esp_now_init();
+  if (esp_now_init() != ESP_OK) {
+    Serial.println("Erro ESP-NOW");
+    return;
+  }
 
-<<<<<<< HEAD
-  esp_now_peer_info_t slaveInfo;
+  esp_now_register_send_cb(OnDataSent);
 
-  memcpy(slaveInfo.peer_addr, robo1, 6);
-  slaveInfo.channel = 0;
-  slaveInfo.encrypt = false;
-  esp_now_add_peer(&slaveInfo);
-}
-
-void loop() {
-  if (Serial2.available() > 0) {
-    digitalWrite (led, HIGH);
-    delay (1500);
-    msg.comando = 3;
-    esp_now_send(robo1, (uint8_t*)&msg, sizeof(msg));
-    digitalWrite (led, LOW);
-=======
-  esp_now_peer_info_t peer;
+  esp_now_peer_info_t peer = {};
 
   memcpy(peer.peer_addr, robo1, 6);
   peer.channel = 0;
   peer.encrypt = false;
-  esp_now_add_peer(&peer);
 
-  memcpy(peer.peer_addr, robo2, 6);
-  esp_now_add_peer(&peer);
+  if (esp_now_add_peer(&peer) != ESP_OK) {
+    Serial.println("Erro ao adicionar peer");
+  }
 }
 
 void loop() {
 
-  if (UnoSerial.available()) {
+  if (Serial2.available()) {
 
-    msg.comando = UnoSerial.parseInt();
-    Serial.print ("recebi: ");
-    Serial.println (msg.comando);
+    int dado = Serial2.parseInt();
 
-    esp_now_send(robo1, (uint8_t*)&msg, sizeof(msg));
+    Serial.print("Recebi: ");
+    Serial.println(dado);
 
-    Serial.print("Resultado envio Robo1: ");
-        
->>>>>>> 144595b170fda105e5ed985ca7366ca09a096358
+    if (dado == 1) {
+
+      digitalWrite(led, HIGH);
+
+      msg.comando = 3;
+
+      esp_now_send(robo1, (uint8_t *)&msg, sizeof(msg));
+      delay (500);
+      digitalWrite(led, LOW);
+      delay (500);
+    }
   }
 }

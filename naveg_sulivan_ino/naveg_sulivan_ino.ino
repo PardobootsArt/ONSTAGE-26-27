@@ -18,9 +18,6 @@ Servo meuServo;
 int posicaoAtual = 25;
 bool sentidoHorario = true;
 
-//COMUNICAÇÃO
-#define ESP Serial1
-
 //correcao
 float Kp = 5.0;
 float Kd = 0.5;
@@ -166,8 +163,10 @@ void setup() {
   //CRONOMETRO
   cronometro = 0;
 
-  //GIROSCÓPIO
-  //Serial.begin(9600);
+  //COMUNICAÇÃO
+  Serial.begin(9600);
+  Serial2.begin(9600);
+
 
   iniciarMPU();
 
@@ -180,11 +179,6 @@ void setup() {
   meuServo.attach(servo);
   meuServo.write(90);
   delay(300);
-
-  //COMUNICAÇÃO
-  ESP.begin(115200);
-  Serial1.begin(115200);
-  Serial.begin(115200);
 
   //MOTORES
   pinMode(motorEF1, OUTPUT);
@@ -422,13 +416,9 @@ bool frenteLivre() {
 
 void loop() {
 
-  if (ESP.available()) {
-
-    int comando = ESP.parseInt();
-
-    if (comando >= 1) {
-      frente(100, 40);
-      delay (1000);
-    }
+  if (Serial2.available()) {
+    int value = Serial2.parseInt();
+    Serial.print("recebi: ");
+    Serial.println(value);
   }
 }
