@@ -57,7 +57,7 @@ else:
     print(f"Arduino conectado em {porta_manual}")
 # 2. INICIALIZA A WEBCAM
 # O argumento '0' geralmente é a webcam integrada do notebook
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)
 
 print("=== Sistema de Webcam Iniciado! Mostre a Tag ID 0 ===")
 
@@ -134,21 +134,22 @@ while True:
             tag_detectada = True
             
             print("TAG 1")
-            arduino.write(b'1')
+            mensagem = "1,0,0\n"
+            arduino.write(mensagem.encode())
 
         elif tag.tag_id == 2:
             tag_detectada = True
             
             print("TAG 2")
-            arduino.write(b'2')
+            mensagem = "2,0,0\n"
+            arduino.write(mensagem.encode())
 
         elif tag.tag_id == 3:
             tag_detectada = True
             
             print("TAG 3")
-            arduino.write(b'3')
-    
-            
+            mensagem = "3,0,0\n"
+            arduino.write(mensagem.encode())
 
     if not tag_detectada:
         mensagem = "-1,0,0\n"
