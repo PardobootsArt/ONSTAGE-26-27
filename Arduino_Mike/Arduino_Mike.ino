@@ -17,8 +17,8 @@ float erroDistancia = 0;
 // GANHOS DO CONTROLADOR
 //=====================================================
 
-float KpX = 0.5;  // Controle lateral
-float KpDist = 0.6;  // Controle da distância
+float KpX = 0.2;  // Controle lateral
+float KpDist = 0.3;  // Controle da distância
 
 
 //=====================================================
@@ -97,7 +97,7 @@ void loop() {
 
     if (tagID == 0) {
 
-      int velocidadeBase = 80;
+      int velocidadeBase = 110;
       // Controle proporcional
 
       Vx = velocidadeBase + (KpDist * erroDistancia);

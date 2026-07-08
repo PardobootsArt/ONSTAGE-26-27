@@ -57,7 +57,7 @@ else:
     print(f"Arduino conectado em {porta_manual}")
 # 2. INICIALIZA A WEBCAM
 # O argumento '0' geralmente é a webcam integrada do notebook
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)
 
 print("=== Sistema de Webcam Iniciado! Mostre a Tag ID 0 ===")
 
