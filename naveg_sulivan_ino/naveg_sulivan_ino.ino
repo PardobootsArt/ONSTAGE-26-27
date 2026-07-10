@@ -1,5 +1,7 @@
 //giroscopio
 #include <Wire.h>
+#include <SoftwareSerial.h>
+
 
 const int MPU = 0x68;
 
@@ -158,7 +160,7 @@ int enbET = 11;
 int enbDT = 10;
 
 int servo = 38;
-
+//===================SETUP========================
 void setup() {
   //CRONOMETRO
   cronometro = 0;
@@ -415,10 +417,14 @@ bool frenteLivre() {
 }
 
 void loop() {
-
   if (Serial2.available()) {
-    int value = Serial2.parseInt();
-    Serial.print("recebi: ");
-    Serial.println(value);
+    int recieve = Serial2.parseInt();
+    Serial.print ("recebi: ");
+    Serial.println (recieve);
+    if (recieve == 3) {
+      delay(2000);
+      Serial2.println(2);
+      delay(1000);
+    }
   }
 }
