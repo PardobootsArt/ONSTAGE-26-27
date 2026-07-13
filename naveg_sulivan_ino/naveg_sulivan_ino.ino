@@ -421,10 +421,10 @@ void loop() {
     int recieve = Serial2.parseInt();
     Serial.print ("recebi: ");
     Serial.println (recieve);
-    if (recieve == 3) {
-      delay(2000);
-      Serial2.println(2);
-      delay(1000);
+    if (recieve == 0) {
+      esquerda (80, 40);
+      delay (500);
+      direita (80, 40);
     }
   }
 }
