@@ -18,11 +18,11 @@ Servo meuServo;
 #define ECHO 2
 int posicaoAtual = 25;
 bool sentidoHorario = true;
+int contagemObjeto;
 
 //===========CORREÇÃO===========
 float Kp = 1.2;
 float Kd = 0.05;
-int cronometro;
 float anguloReferencia = 0;
 float ultimoErro = 0;
 unsigned long ultimoControle = 0;
@@ -53,7 +53,7 @@ int procurarObjeto() {
 
     int distancia = lerDistancia();
 
-    if (distancia > 0 && distancia < 20) {
+    if (distancia > 0 && distancia < 30) {
 
       delay(150);
       varreduraCompleta = false;
@@ -165,8 +165,7 @@ int enbDT = 10;
 int servo = 38;
 //===================SETUP========================
 void setup() {
-  //CRONOMETRO
-  cronometro = 0;
+
 
   //COMUNICAÇÃO
   Serial.begin(9600);
@@ -182,7 +181,7 @@ void setup() {
   pinMode(ECHO, INPUT);
 
   meuServo.attach(servo);
-  meuServo.write(90);
+  meuServo.write(25);
   delay(300);
 
   //MOTORES
@@ -202,6 +201,9 @@ void setup() {
 
   pinMode(20, INPUT);
   pinMode(21, INPUT);
+  contagemObjeto = 0;
+  frente (80, 1000);
+  delay (150);
 }
 
 float correcao() {
@@ -352,7 +354,7 @@ int calcularTempo(int angulo) {
 
   int erro = abs(angulo - 90);
   float fator = cos(radians(erro));
-  int tempo = 15000 * cos(radians(abs(angulo - 90)));
+  int tempo = 15 * cos(radians(abs(angulo - 90)));
   tempo = constrain(tempo, 5, 20);
   return tempo;
 }
@@ -372,36 +374,38 @@ bool frenteLivre() {
 }
 
 void loop() {
-  int contagemObjeto = 0;
-  while (contagemObjeto < 3) {
+  while (contagemObjeto <= 3) {
     int grauss = procurarObjeto();
     int time = calcularTempo(grauss);
     if (grauss != -1) {
       if (grauss < 90) {
         //objeto na esquerda, ir para direita
-        direita(70, time);
+        int tempo = time * 85;
+        contagemObjeto++;
+
+        direita(70, tempo);
         delay(200);
-        if (frenteLivre() == true){
-          frente (80, 500);
-          contagemObjeto ++;
+        if (frenteLivre() == true) {
+          frente(80, 1850);
         } else {
-          direita (70, 200);
-          delay (200);
-          frente (80, 500);
+          direita(70, 1500);
+          delay(200);
+          frente(80, 1850);
         }
       }
 
       if (grauss > 90) {
         //objeto na direita, ir para esquerda
-        esquerda(70, time);
+        int tempo = time * 85;
+        contagemObjeto++;
+        esquerda(70, tempo);
         delay(200);
-        if (frenteLivre() == true){
-          frente (80, 500);
-          contagemObjeto ++;
+        if (frenteLivre() == true) {
+          frente(80, 1850);
         } else {
-          esquerda (70, 200);
-          delay (200);
-          frente (80, 500);
+          esquerda(70, 1500);
+          delay(200);
+          frente(80, 1850);
         }
       }
     } else if (varreduraCompleta) {
