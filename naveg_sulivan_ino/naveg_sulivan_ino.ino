@@ -1,5 +1,6 @@
 //giroscopio
 #include <Wire.h>
+#include <SoftwareSerial.h>
 
 const int MPU = 0x68;
 
@@ -8,7 +9,7 @@ unsigned long ultimoTempo;
 
 float offsetGz = 0;
 
-//radar
+//=============RADAR==============
 #include <Servo.h>
 
 Servo meuServo;
@@ -17,13 +18,16 @@ Servo meuServo;
 #define ECHO 2
 int posicaoAtual = 25;
 bool sentidoHorario = true;
+int contagemObjeto;
 
-//correcao
-float Kp = 5.0;
-float Kd = 0.5;
-int cronometro;
+//===========CORREÇÃO===========
+float Kp = 1.2;
+float Kd = 0.05;
+float anguloReferencia = 0;
+float ultimoErro = 0;
+unsigned long ultimoControle = 0;
 
-//FUNÇÕES DA PROGRAMAÇÃO
+//==============FUNÇÕES DA PROGRAMAÇÃO=============
 int lerDistancia() {
   digitalWrite(TRIG, LOW);
   delayMicroseconds(2);
@@ -39,6 +43,7 @@ int lerDistancia() {
 }
 
 bool varreduraCompleta = false;
+
 int procurarObjeto() {
 
   while (true) {
@@ -48,9 +53,9 @@ int procurarObjeto() {
 
     int distancia = lerDistancia();
 
-    if (distancia > 0 && distancia < 20) {
+    if (distancia > 0 && distancia < 30) {
 
-      delay(1000);  // pausa olhando para o objeto
+      delay(150);
       varreduraCompleta = false;
       return posicaoAtual;
     }
@@ -158,10 +163,9 @@ int enbET = 11;
 int enbDT = 10;
 
 int servo = 38;
-
+//===================SETUP========================
 void setup() {
-  //CRONOMETRO
-  cronometro = 0;
+
 
   //COMUNICAÇÃO
   Serial.begin(9600);
@@ -177,7 +181,7 @@ void setup() {
   pinMode(ECHO, INPUT);
 
   meuServo.attach(servo);
-  meuServo.write(90);
+  meuServo.write(25);
   delay(300);
 
   //MOTORES
@@ -197,41 +201,53 @@ void setup() {
 
   pinMode(20, INPUT);
   pinMode(21, INPUT);
+  contagemObjeto = 0;
+  frente (80, 1000);
+  delay (150);
 }
 
-void temporizador(int Z, int C) {
-  if (C == 1) {
-    cronometro++;
-  } else if (Z == 1) {
-    cronometro = 0;
-  }
+float correcao() {
+  float ang = obterAngulo();
+  float erro = anguloReferencia - ang;
+
+  unsigned long agora = millis();
+  float dt = (agora - ultimoControle) / 1000.0;
+  if (dt <= 0) dt = 0.001;
+
+  float deriv = (erro - ultimoErro) / dt;
+  ultimoErro = erro;
+  ultimoControle = agora;
+
+  return Kp * erro + Kd * deriv;
 }
 
-void esquerda(int velo, int tempo) {
-  temporizador(1, 0);
-  float ultimoError = 0;
-  while (cronometro < tempo) {
-    temporizador(0, 1);
-    float error = obterAngulo();
-    Serial.print(" Error: ");
-    Serial.print(obterAngulo());
-    Serial.print("Tempo: ");
-    Serial.print(cronometro);
-    float correcaoP = Kp * error;
-    float correcaoD = Kd * (error - ultimoError);
-    float correcaoFinal = correcaoP + correcaoD;
-    float velDir = velo - correcaoFinal;
-    float velEsq = velo + correcaoFinal;
+void pararMotores() {
+  analogWrite(enbEF, 0);
+  analogWrite(enbDF, 0);
+  analogWrite(enbET, 0);
+  analogWrite(enbDT, 0);
+  digitalWrite(motorEF1, LOW);
+  digitalWrite(motorEF2, LOW);
+  digitalWrite(motorDF1, LOW);
+  digitalWrite(motorDF2, LOW);
+  digitalWrite(motorET1, LOW);
+  digitalWrite(motorET2, LOW);
+  digitalWrite(motorDT1, LOW);
+  digitalWrite(motorDT2, LOW);
+}
+
+void esquerda(int velo, int tempoMs) {
+  anguloReferencia = obterAngulo();
+  ultimoErro = 0;
+  ultimoControle = millis();
+  unsigned long inicio = millis();
+  while (millis() - inicio < tempoMs) {
+    float c = correcao();
+    ;
+    float velDir = velo + c;
+    float velEsq = velo - c;
     velEsq = constrain(velEsq, 0, 255);
     velDir = constrain(velDir, 0, 255);
-    Serial.print(" Direita: ");
-    Serial.print(velDir);
-    Serial.print(" Esquerda: ");
-    Serial.println(velEsq);
-    analogWrite(enbEF, velEsq);
-    analogWrite(enbDF, velDir);
-    analogWrite(enbET, velEsq);
-    analogWrite(enbDT, velDir);
     digitalWrite(motorEF1, LOW);
     digitalWrite(motorEF2, HIGH);
     digitalWrite(motorDF1, LOW);
@@ -240,43 +256,26 @@ void esquerda(int velo, int tempo) {
     digitalWrite(motorET2, HIGH);
     digitalWrite(motorDT1, LOW);
     digitalWrite(motorDT2, HIGH);
-    ultimoError = error;
-  }
-  digitalWrite(motorEF1, LOW);
-  digitalWrite(motorEF2, LOW);
-  digitalWrite(motorDF1, LOW);
-  digitalWrite(motorDF2, LOW);
-  digitalWrite(motorET1, LOW);
-  digitalWrite(motorET2, LOW);
-  digitalWrite(motorDT1, LOW);
-  digitalWrite(motorDT2, LOW);
-}
-
-void direita(int velo, int tempo) {
-  temporizador(1, 0);
-  float ultimoError = 0;
-  while (cronometro < tempo) {
-    temporizador(0, 1);
-    float error = obterAngulo();
-    Serial.print(" Error: ");
-    Serial.print(obterAngulo());
-    Serial.print("Tempo: ");
-    Serial.print(cronometro);
-    float correcaoP = Kp * error;
-    float correcaoD = Kd * (error - ultimoError);
-    float correcaoFinal = correcaoP + correcaoD;
-    float velDir = velo + correcaoFinal;
-    float velEsq = velo - correcaoFinal;
-    velEsq = constrain(velEsq, 0, 255);
-    velDir = constrain(velDir, 0, 255);
-    Serial.print(" Direita: ");
-    Serial.print(velDir);
-    Serial.print(" Esquerda: ");
-    Serial.println(velEsq);
     analogWrite(enbEF, velEsq);
     analogWrite(enbDF, velDir);
     analogWrite(enbET, velEsq);
     analogWrite(enbDT, velDir);
+  }
+  pararMotores();
+}
+
+void direita(int velo, int tempoMs) {
+  anguloReferencia = obterAngulo();
+  ultimoErro = 0;
+  ultimoControle = millis();
+  unsigned long inicio = millis();
+
+  while (millis() - inicio < tempoMs) {
+    float c = correcao();
+    float velDir = velo - c;
+    float velEsq = velo + c;
+    velEsq = constrain(velEsq, 0, 255);
+    velDir = constrain(velDir, 0, 255);
     digitalWrite(motorEF1, HIGH);
     digitalWrite(motorEF2, LOW);
     digitalWrite(motorDF1, HIGH);
@@ -285,44 +284,26 @@ void direita(int velo, int tempo) {
     digitalWrite(motorET2, LOW);
     digitalWrite(motorDT1, HIGH);
     digitalWrite(motorDT2, LOW);
-    ultimoError = error;
+    analogWrite(enbEF, velEsq);
+    analogWrite(enbDF, velDir);
+    analogWrite(enbET, velEsq);
+    analogWrite(enbDT, velDir);
   }
-
-  digitalWrite(motorEF1, LOW);
-  digitalWrite(motorEF2, LOW);
-  digitalWrite(motorDF1, LOW);
-  digitalWrite(motorDF2, LOW);
-  digitalWrite(motorET1, LOW);
-  digitalWrite(motorET2, LOW);
-  digitalWrite(motorDT1, LOW);
-  digitalWrite(motorDT2, LOW);
+  pararMotores();
 }
 
-void frente(int velo, int tempo) {
-  temporizador(1, 0);
-  float ultimoError = 0;
-  while (cronometro < tempo) {
-    float error = obterAngulo();
-    Serial.print(" Angulo: ");
-    Serial.print(error);
-    temporizador(0, 1);
-    Serial.print(" Tempo: ");
-    Serial.print(cronometro);
-    float correcaoP = Kp * error;
-    float correcaoD = Kd * (error - ultimoError);
-    float correcaoFinal = correcaoP + correcaoD;
-    float velDir = velo + correcaoFinal;
-    float velEsq = velo - correcaoFinal;
+void frente(int velo, int tempoMs) {
+  anguloReferencia = obterAngulo();
+  ultimoErro = 0;
+  ultimoControle = millis();
+  unsigned long inicio = millis();
+
+  while (millis() - inicio < tempoMs) {
+    float c = correcao();
+    float velDir = velo - c;
+    float velEsq = velo + c;
     velEsq = constrain(velEsq, 0, 255);
     velDir = constrain(velDir, 0, 255);
-    Serial.print(" Direita: ");
-    Serial.print(velDir);
-    Serial.print(" Esquerda: ");
-    Serial.println(velEsq);
-    analogWrite(enbEF, velEsq);
-    analogWrite(enbDF, velEsq);
-    analogWrite(enbET, velDir);
-    analogWrite(enbDT, velDir);
     digitalWrite(motorEF1, HIGH);
     digitalWrite(motorEF2, LOW);
     digitalWrite(motorDF1, LOW);
@@ -331,45 +312,27 @@ void frente(int velo, int tempo) {
     digitalWrite(motorET2, HIGH);
     digitalWrite(motorDT1, HIGH);
     digitalWrite(motorDT2, LOW);
-    ultimoError = error;
-  }
-
-  digitalWrite(motorEF1, LOW);
-  digitalWrite(motorEF2, LOW);
-  digitalWrite(motorDF1, LOW);
-  digitalWrite(motorDF2, LOW);
-  digitalWrite(motorET1, LOW);
-  digitalWrite(motorET2, LOW);
-  digitalWrite(motorDT1, LOW);
-  digitalWrite(motorDT2, LOW);
-}
-
-
-void tras(int velo, int tempo) {
-  temporizador(1, 0);
-  float ultimoError = 0;
-  while (cronometro < tempo) {
-    float error = obterAngulo();
-    Serial.print(" Angulo: ");
-    Serial.print(error);
-    temporizador(0, 1);
-    Serial.print(" Tempo: ");
-    Serial.print(cronometro);
-    float correcaoP = Kp * error;
-    float correcaoD = Kd * (error - ultimoError);
-    float correcaoFinal = correcaoP + correcaoD;
-    float velDir = velo - correcaoFinal;
-    float velEsq = velo + correcaoFinal;
-    velEsq = constrain(velEsq, 0, 255);
-    velDir = constrain(velDir, 0, 255);
-    Serial.print(" Direita: ");
-    Serial.print(velDir);
-    Serial.print(" Esquerda: ");
-    Serial.println(velEsq);
     analogWrite(enbEF, velEsq);
     analogWrite(enbDF, velEsq);
     analogWrite(enbET, velDir);
     analogWrite(enbDT, velDir);
+  }
+  pararMotores();
+}
+
+
+void tras(int velo, int tempoMs) {
+  anguloReferencia = obterAngulo();
+  ultimoErro = 0;
+  ultimoControle = millis();
+  unsigned long inicio = millis();
+
+  while (millis() - inicio < tempoMs) {
+    float c = correcao();
+    float velDir = velo + c;
+    float velEsq = velo - c;
+    velEsq = constrain(velEsq, 0, 255);
+    velDir = constrain(velDir, 0, 255);
     digitalWrite(motorEF2, HIGH);
     digitalWrite(motorEF1, LOW);
     digitalWrite(motorDF2, LOW);
@@ -378,17 +341,13 @@ void tras(int velo, int tempo) {
     digitalWrite(motorET1, HIGH);
     digitalWrite(motorDT2, HIGH);
     digitalWrite(motorDT1, LOW);
-    ultimoError = error;
+    analogWrite(enbEF, velEsq);
+    analogWrite(enbDF, velEsq);
+    analogWrite(enbET, velDir);
+    analogWrite(enbDT, velDir);
   }
 
-  digitalWrite(motorEF1, LOW);
-  digitalWrite(motorEF2, LOW);
-  digitalWrite(motorDF1, LOW);
-  digitalWrite(motorDF2, LOW);
-  digitalWrite(motorET1, LOW);
-  digitalWrite(motorET2, LOW);
-  digitalWrite(motorDT1, LOW);
-  digitalWrite(motorDT2, LOW);
+  pararMotores();
 }
 
 int calcularTempo(int angulo) {
@@ -415,10 +374,44 @@ bool frenteLivre() {
 }
 
 void loop() {
+  while (contagemObjeto <= 3) {
+    int grauss = procurarObjeto();
+    int time = calcularTempo(grauss);
+    if (grauss != -1) {
+      if (grauss < 90) {
+        //objeto na esquerda, ir para direita
+        int tempo = time * 85;
+        contagemObjeto++;
 
-  if (Serial2.available()) {
-    int value = Serial2.parseInt();
-    Serial.print("recebi: ");
-    Serial.println(value);
+        direita(70, tempo);
+        delay(200);
+        if (frenteLivre() == true) {
+          frente(80, 1850);
+        } else {
+          direita(70, 1500);
+          delay(200);
+          frente(80, 1850);
+        }
+      }
+
+      if (grauss > 90) {
+        //objeto na direita, ir para esquerda
+        int tempo = time * 85;
+        contagemObjeto++;
+        esquerda(70, tempo);
+        delay(200);
+        if (frenteLivre() == true) {
+          frente(80, 1850);
+        } else {
+          esquerda(70, 1500);
+          delay(200);
+          frente(80, 1850);
+        }
+      }
+    } else if (varreduraCompleta) {
+      frente(80, 200);
+      varreduraCompleta = false;
+    }
   }
+  delay(2000);
 }
