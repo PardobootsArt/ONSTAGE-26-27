@@ -9,17 +9,18 @@ void setup() {
 }
 
 void loop() {
-  // Vai de 0 a 180
+  // Servo A: 0 -> 180
+  // Servo B: 180 -> 0
   for (int n = 0; n <= 180; n++) {
     servoA.write(n);
-    servoB.write(n);
-    delay(10);
+    servoB.write(180 - n);
+    delay(100);
   }
 
-  // Volta de 180 a 0
+  // Volta
   for (int n = 180; n >= 0; n--) {
     servoA.write(n);
-    servoB.write(n);
-    delay(10);
+    servoB.write(180 - n);
+    delay(100);
   }
-}
+}  
