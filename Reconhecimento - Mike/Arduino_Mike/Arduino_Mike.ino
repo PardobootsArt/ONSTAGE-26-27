@@ -6,7 +6,7 @@
 // Se for -1 significa que nenhuma tag foi encontrada.
 int tagID = -1;
 
-// Erro horizontal em pixels.
+// Erro horizontal em pixels.y
 float erroX = 0;
 
 // Erro de distância.
@@ -17,8 +17,8 @@ float erroDistancia = 0;
 // GANHOS DO CONTROLADOR
 //=====================================================
 
-float KpX = 0.5;  // Controle lateral
-float KpDist = 0.6;  // Controle da distância
+float KpX = 0.15;  // Controle lateral
+float KpDist = 0.1;  // Controle da distância
 
 
 //=====================================================
@@ -97,40 +97,42 @@ void loop() {
 
     if (tagID == 0) {
 
-      int velocidadeBase = 80;
+      int velocidadeBase = 75;
       // Controle proporcional
 
       Vx = velocidadeBase + (KpDist * erroDistancia);
       W = KpX * erroX;
       // Limita o PWM
-      float velEF = Vx - W;
-      float velDF = Vx + W;
-      float velET = Vx + W;
-      float velDT = Vx - W;
+      float velEF = Vx + W;
+      float velDF = Vx - W;
+      float velET = Vx - W;
+      float velDT = Vx + W;
 
       velEF = constrain(velEF, 0, 255);
       velDF = constrain(velDF, 0, 255);
       velET = constrain(velET, 0, 255);
       velDT = constrain(velDT, 0, 255);
 
-      digitalWrite(motorEF1, LOW);
-      digitalWrite(motorEF2, HIGH);
+      digitalWrite(motorEF2, LOW);
+      digitalWrite(motorEF1, HIGH);
       analogWrite(enbEF, velEF);
 
-      digitalWrite(motorDF1, HIGH);
-      digitalWrite(motorDF2, LOW);
+      digitalWrite(motorDF2, HIGH);
+      digitalWrite(motorDF1, LOW);
       analogWrite(enbDF, velDF);
 
-      digitalWrite(motorET1, HIGH);
-      digitalWrite(motorET2, LOW);
+      digitalWrite(motorET2, HIGH);
+      digitalWrite(motorET1, LOW);
       analogWrite(enbET, velET);
 
-      digitalWrite(motorDT1, HIGH);
-      digitalWrite(motorDT2, LOW);
+      digitalWrite(motorDT2, HIGH);
+      digitalWrite(motorDT1, LOW);
       analogWrite(enbDT, velDT);
+      
+      delay(100);
     }
 
-    if (tagID == 1){
+    if (tagID == -1){
       digitalWrite(motorEF1, LOW);
       digitalWrite(motorEF2, LOW);
       digitalWrite(motorDF1, LOW);
