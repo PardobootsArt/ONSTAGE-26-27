@@ -8,6 +8,16 @@ float anguloZ = 0.0;
 unsigned long ultimoTempo;
 
 float offsetGz = 0;
+//=============MOVIMENTAÇÃO=============
+#define bracoE1 49
+#define bracoE2 47
+#define bracoD1 51
+#define bracoD2 53
+#define enbracoD 4
+#define enbracoE 5
+#define tronco1 45
+#define tronco2 43
+#define enbtronco 6
 
 //=============RADAR==============
 #include <Servo.h>
@@ -175,6 +185,19 @@ void setup() {
   iniciarMPU();
 
   Serial.println("MPU pronto!");
+
+  //=========MOVIMENTAÇÃO==========
+  pinMode(bracoE1, OUTPUT);
+  pinMode(bracoE2, OUTPUT);
+  pinMode(bracoD1, OUTPUT);
+  pinMode(bracoD2, OUTPUT);
+
+  pinMode(enbracoD, OUTPUT);
+  pinMode(enbracoE, OUTPUT);
+
+  pinMode(tronco1, OUTPUT);
+  pinMode(tronco2, OUTPUT);
+  pinMode(enbtronco, OUTPUT);
 
   //RADAR
   pinMode(TRIG, OUTPUT);
@@ -414,4 +437,7 @@ void loop() {
     }
   }
   delay(2000);
+  if (contagemObjeto == 3){
+    
+  }
 }
