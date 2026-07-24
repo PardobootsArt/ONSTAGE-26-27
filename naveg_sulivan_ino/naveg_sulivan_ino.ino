@@ -19,13 +19,17 @@ float offsetGz = 0;
 #define tronco2 43
 #define enbtronco 6
 
+#define yTronco 2
+#define bTronco 9
+volatile long degrees;
+
 //=============RADAR==============
 #include <Servo.h>
 
 Servo meuServo;
 
-#define TRIG 3
-#define ECHO 2
+#define TRIG 5
+#define ECHO 4
 int posicaoAtual = 25;
 bool sentidoHorario = true;
 int contagemObjeto;
@@ -37,7 +41,36 @@ float anguloReferencia = 0;
 float ultimoErro = 0;
 unsigned long ultimoControle = 0;
 
-//==============FUNÇÕES DA PROGRAMAÇÃO=============
+//==============FUNÇÕES DA PROGRAMAÇÃO==========================
+//========================TRONCO===========
+void countDegrees() {
+  if (digitalRead(yTronco) == digitalRead(bTronco)) {
+    degrees++;
+  } else {
+    degrees--;
+  }
+}
+
+void girarTronco(int speed, int anguloo) {
+  analogWrite(enbtronco, speed);
+  if (anguloo > degrees) {
+    while (degrees < anguloo) {
+      digitalWrite(tronco1, HIGH);
+      digitalWrite(tronco2, LOW);
+    }
+    digitalWrite(tronco1, LOW);
+    digitalWrite(tronco2, LOW);
+  }
+  if (anguloo < degrees) {
+    while (degrees > anguloo) {
+      digitalWrite(tronco1, LOW);
+      digitalWrite(tronco2, HIGH);
+    }
+    digitalWrite(tronco1, LOW);
+    digitalWrite(tronco2, LOW);
+  }
+}
+//====================RADAR===================
 int lerDistancia() {
   digitalWrite(TRIG, LOW);
   delayMicroseconds(2);
@@ -57,7 +90,8 @@ bool varreduraCompleta = false;
 int procurarObjeto() {
 
   while (true) {
-
+    int posTronco=posicaoAtual*10;
+    girarTronco (90, posTronco);
     meuServo.write(posicaoAtual);
     delay(15);
 
@@ -94,7 +128,7 @@ int procurarObjeto() {
 }
 
 
-//FUNÇÃO PARA O GIROSCÓPIO
+//==================GIROSCÓPIO=================
 void iniciarMPU() {
   Wire.begin();
 
@@ -157,7 +191,7 @@ float obterAngulo() {
   return anguloCorrigido;
 }
 
-// MOTORES
+// ==================MOTORES====================
 int motorDF1 = 26;
 int motorDF2 = 28;
 int motorEF1 = 22;
@@ -173,17 +207,13 @@ int enbET = 11;
 int enbDT = 10;
 
 int servo = 38;
-//===================SETUP========================
+//===============================================SETUP=========================================
 void setup() {
-
-
   //COMUNICAÇÃO
   Serial.begin(9600);
   Serial2.begin(9600);
 
-
   iniciarMPU();
-
   Serial.println("MPU pronto!");
 
   //=========MOVIMENTAÇÃO==========
@@ -199,7 +229,13 @@ void setup() {
   pinMode(tronco2, OUTPUT);
   pinMode(enbtronco, OUTPUT);
 
-  //RADAR
+  pinMode(yTronco, INPUT);
+  pinMode(bTronco, INPUT);
+  degrees = 0;
+  attachInterrupt(digitalPinToInterrupt(yTronco), countDegrees, CHANGE);
+  analogWrite(enbtronco, 100);
+
+  //============RADAR===========
   pinMode(TRIG, OUTPUT);
   pinMode(ECHO, INPUT);
 
@@ -207,7 +243,7 @@ void setup() {
   meuServo.write(25);
   delay(300);
 
-  //MOTORES
+  //==============MOTORES=================
   pinMode(motorEF1, OUTPUT);
   pinMode(motorEF2, OUTPUT);
   pinMode(motorDF1, OUTPUT);
@@ -225,8 +261,9 @@ void setup() {
   pinMode(20, INPUT);
   pinMode(21, INPUT);
   contagemObjeto = 0;
-  frente (80, 1000);
-  delay (150);
+  //frente (80, 1000);
+  analogWrite(enbtronco, 175);
+  delay(150);
 }
 
 float correcao() {
@@ -397,47 +434,8 @@ bool frenteLivre() {
 }
 
 void loop() {
-  while (contagemObjeto <= 3) {
-    int grauss = procurarObjeto();
-    int time = calcularTempo(grauss);
-    if (grauss != -1) {
-      if (grauss < 90) {
-        //objeto na esquerda, ir para direita
-        int tempo = time * 85;
-        contagemObjeto++;
-
-        direita(70, tempo);
-        delay(200);
-        if (frenteLivre() == true) {
-          frente(80, 1850);
-        } else {
-          direita(70, 1500);
-          delay(200);
-          frente(80, 1850);
-        }
-      }
-
-      if (grauss > 90) {
-        //objeto na direita, ir para esquerda
-        int tempo = time * 85;
-        contagemObjeto++;
-        esquerda(70, tempo);
-        delay(200);
-        if (frenteLivre() == true) {
-          frente(80, 1850);
-        } else {
-          esquerda(70, 1500);
-          delay(200);
-          frente(80, 1850);
-        }
-      }
-    } else if (varreduraCompleta) {
-      frente(80, 200);
-      varreduraCompleta = false;
-    }
-  }
-  delay(2000);
-  if (contagemObjeto == 3){
-    
-  }
+  procurarObjeto();
+  Serial.print("graus: ");
+  Serial.println(degrees);
+  delay(500);
 }
