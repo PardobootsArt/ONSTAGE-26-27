@@ -132,10 +132,41 @@ while True:
 
         elif tag.tag_id == 1:
             tag_detectada = True
+
+            tagWidth = np.linalg.norm(corners[0] - corners[1])
+            tagHeight = np.linalg.norm(corners[1] - corners[2])
+            
+            # Calcula a diagonal (Pitágoras)
+            tagLength = math.sqrt((tagWidth ** 2) + (tagHeight ** 2))
+            
+            # Desenha a linha lilás do centro da tag até o centro da tela
+            cv2.line(frame, (cx, cy), (centro_tela_x, centro_tela_y), (255, 130, 171), 2)
+            
+            # Desenha o círculo azul no centro da tela
+            cv2.circle(frame, (centro_tela_x, centro_tela_y), 6, (255, 144, 30), -1)
+
+            # ==========================================================
+            # CÁLCULO DOS ERROS
+
+            # Erro horizontal.
+            erro_x = cx - centro_tela_x
+
+            # Distância desejada.
+            DISTANCIA_DESEJADA = 180
+
+            # Erro de distância.
+            erro_distancia = DISTANCIA_DESEJADA - tagLength
             
             print("TAG 1")
-            mensagem = "1,0,0\n"
+            mensagem = f"{tag.tag_id},{erro_x},{erro_distancia:.2f}\n"
             arduino.write(mensagem.encode())
+
+            print("-------------------------------------")
+            print("Mensagem enviada ao Arduino:")
+
+            print(mensagem.strip())
+
+            print("-------------------------------------")
 
         elif tag.tag_id == 2:
             tag_detectada = True
@@ -149,6 +180,13 @@ while True:
             
             print("TAG 3")
             mensagem = "3,0,0\n"
+            arduino.write(mensagem.encode())
+        
+        elif tag.tag_id == 4:
+            tag_detectada = True
+            
+            print("TAG 4")
+            mensagem = "4,0,0\n"
             arduino.write(mensagem.encode())
 
     if not tag_detectada:
