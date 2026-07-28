@@ -52,6 +52,9 @@ int enbDT = 12;
 bool girar180 = false;
 bool girar90D = false;
 bool girar90E = false;
+int estado;
+int toleranciaX = 20;
+int toleranciaDist = 10;
 
 void setup() {
   Serial.begin(9600);
@@ -70,6 +73,71 @@ void setup() {
   pinMode(enbET, OUTPUT);
   pinMode(enbDT, OUTPUT);
   pinMode(13, OUTPUT);
+  estado = 0;
+}
+void direcaoMotores(int direcao) {
+  if (direcao == 1) {
+    digitalWrite(motorEF2, LOW);
+    digitalWrite(motorEF1, HIGH);
+
+    digitalWrite(motorDF2, HIGH);
+    digitalWrite(motorDF1, LOW);
+
+    digitalWrite(motorET2, HIGH);
+    digitalWrite(motorET1, LOW);
+
+    digitalWrite(motorDT2, HIGH);
+    digitalWrite(motorDT1, LOW);
+  }
+  if (direcao == 2) {
+    digitalWrite(motorEF1, LOW);
+    digitalWrite(motorEF2, HIGH);
+
+    digitalWrite(motorDF1, HIGH);
+    digitalWrite(motorDF2, LOW);
+
+    digitalWrite(motorET1, HIGH);
+    digitalWrite(motorET2, LOW);
+
+    digitalWrite(motorDT1, HIGH);
+    digitalWrite(motorDT2, LOW);
+  }
+  if (direcao == 3) {
+    digitalWrite(motorEF1, LOW);
+    digitalWrite(motorEF2, HIGH);
+
+    digitalWrite(motorDF2, HIGH);
+    digitalWrite(motorDF1, LOW);
+
+    digitalWrite(motorET2, HIGH);
+    digitalWrite(motorET1, LOW);
+
+    digitalWrite(motorDT1, HIGH);
+    digitalWrite(motorDT2, LOW);
+  }
+  if (direcao == 4) {
+    digitalWrite(motorEF2, LOW);
+    digitalWrite(motorEF1, HIGH);
+
+    digitalWrite(motorDF1, HIGH);
+    digitalWrite(motorDF2, LOW);
+
+    digitalWrite(motorET1, HIGH);
+    digitalWrite(motorET2, LOW);
+
+    digitalWrite(motorDT2, HIGH);
+    digitalWrite(motorDT1, LOW);
+  }
+  if (direcao == -1) {
+    digitalWrite(motorEF1, LOW);
+    digitalWrite(motorEF2, LOW);
+    digitalWrite(motorDF1, LOW);
+    digitalWrite(motorDF2, LOW);
+    digitalWrite(motorET1, LOW);
+    digitalWrite(motorET2, LOW);
+    digitalWrite(motorDT1, LOW);
+    digitalWrite(motorDT2, LOW);
+  }
 }
 
 
@@ -141,35 +209,29 @@ void loop() {
     if (tagID == 1) {
       float KpX = 0.5;  // Controle lateral
       float KpDist = 1.5;
+      if (estado == 0) {
+        Vx = 0;
+        W = KpX * abs(erroX);
+        float velocidF = 120 + W;
+        float velocidT = 100 + W;
 
-      Vx = KpDist * erroDistancia;
-      W = KpX * erroX;
-      // Limita o PWM
-      float velEF = Vx + W;
-      float velDF = Vx - W;
-      float velET = Vx - W;
-      float velDT = Vx + W;
+        velocidF = constrain(velocidF, 0, 255);
+        velocidT = constrain(velocidT, 0, 255);
 
-      velEF = constrain(velEF, 0, 255);
-      velDF = constrain(velDF, 0, 255);
-      velET = constrain(velET, 0, 255);
-      velDT = constrain(velDT, 0, 255);
-
-      digitalWrite(motorEF2, LOW);
-      digitalWrite(motorEF1, HIGH);
-      analogWrite(enbEF, velEF);
-
-      digitalWrite(motorDF2, HIGH);
-      digitalWrite(motorDF1, LOW);
-      analogWrite(enbDF, velDF);
-
-      digitalWrite(motorET2, HIGH);
-      digitalWrite(motorET1, LOW);
-      analogWrite(enbET, velET);
-
-      digitalWrite(motorDT2, HIGH);
-      digitalWrite(motorDT1, LOW);
-      analogWrite(enbDT, velDT);
+        analogWrite(enbEF, velocidF);
+        analogWrite(enbDF, velocidF);
+        analogWrite(enbET, velocidT);
+        analogWrite(enbDT, velocidT);
+        if (erroX > 0) {
+          direcaoMotores(4);  //ESQUERDA
+        }
+        if (erroX < 0) {
+          direcaoMotores(3);  //DIREITA
+        }
+        if (abs(erroX) < toleranciaX) {
+          direcaoMotores(-1);
+        }
+      }
     }
     //===============GIRAR 180 GRAUS ====================
     if (tagID == 2) {
