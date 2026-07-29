@@ -89,7 +89,7 @@ void loop() {
     Serial.print(blue, DEC);
     Serial.println();
     Serial.println("Procurando Verde");
-    AcenderLed(175, 0, 255);
+    AcenderLed(150, 0, 255);
 
     //motores
     distFrente = calDistanciaF ();
@@ -155,7 +155,7 @@ void loop() {
     //Verifica se a cor branca foi detectada
     if (red < 100 && green < 100 && blue < 100) {
       Serial.println("BRANCO");
-      AcenderLed(175, 0, 255);
+      AcenderLed(150, 0, 255);
     }
     //Verifica se a cor amarela foi detectada
     else if (red < 60 && green < 100 && green < blue) {
