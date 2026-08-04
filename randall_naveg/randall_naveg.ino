@@ -89,7 +89,7 @@ void loop() {
     Serial.print(blue, DEC);
     Serial.println();
     Serial.println("Procurando Verde");
-    AcenderLed(150, 0, 255);
+    AcenderLed(200, 0, 255);
 
     //motores
     distFrente = calDistanciaF ();
