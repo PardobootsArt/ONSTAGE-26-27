@@ -17,8 +17,8 @@ float erroDistancia = 0;
 // GANHOS DO CONTROLADOR
 //=====================================================
 
-float KpX = 0.15;    // Controle lateral
-float KpDist = 0.1;  // Controle da distância
+float KpX = 0.3;      // Controle lateral
+float KpDist = 0.25;  // Controle da distância
 
 
 //=====================================================
@@ -57,6 +57,7 @@ int toleranciaX = 20;
 int toleranciaDist = 10;
 
 void setup() {
+  //direita
   Serial.begin(9600);
 
   pinMode(motorEF1, OUTPUT);
@@ -76,7 +77,9 @@ void setup() {
   estado = 0;
 }
 void direcaoMotores(int direcao) {
+  //direita
   if (direcao == 1) {
+    //frente
     digitalWrite(motorEF2, LOW);
     digitalWrite(motorEF1, HIGH);
 
@@ -86,10 +89,11 @@ void direcaoMotores(int direcao) {
     digitalWrite(motorET2, HIGH);
     digitalWrite(motorET1, LOW);
 
-    digitalWrite(motorDT2, HIGH);
-    digitalWrite(motorDT1, LOW);
+    digitalWrite(motorDT2, LOW);
+    digitalWrite(motorDT1, HIGH);
   }
   if (direcao == 2) {
+
     digitalWrite(motorEF1, LOW);
     digitalWrite(motorEF2, HIGH);
 
@@ -99,10 +103,11 @@ void direcaoMotores(int direcao) {
     digitalWrite(motorET1, HIGH);
     digitalWrite(motorET2, LOW);
 
-    digitalWrite(motorDT1, HIGH);
-    digitalWrite(motorDT2, LOW);
+    digitalWrite(motorDT1, LOW);
+    digitalWrite(motorDT2, HIGH);
   }
   if (direcao == 3) {
+    //direita
     digitalWrite(motorEF1, LOW);
     digitalWrite(motorEF2, HIGH);
 
@@ -112,10 +117,11 @@ void direcaoMotores(int direcao) {
     digitalWrite(motorET2, HIGH);
     digitalWrite(motorET1, LOW);
 
-    digitalWrite(motorDT1, HIGH);
-    digitalWrite(motorDT2, LOW);
+    digitalWrite(motorDT1, LOW);
+    digitalWrite(motorDT2, HIGH);
   }
   if (direcao == 4) {
+    //esquerda
     digitalWrite(motorEF2, LOW);
     digitalWrite(motorEF1, HIGH);
 
@@ -125,8 +131,50 @@ void direcaoMotores(int direcao) {
     digitalWrite(motorET1, HIGH);
     digitalWrite(motorET2, LOW);
 
-    digitalWrite(motorDT2, HIGH);
+    digitalWrite(motorDT2, LOW);
+    digitalWrite(motorDT1, HIGH);
+  }
+  if (direcao == 180) {
+    //esquerda girar 180
+    digitalWrite(motorEF1, LOW);
+    digitalWrite(motorEF2, HIGH);
+
+    digitalWrite(motorDF2, HIGH);
+    digitalWrite(motorDF1, LOW);
+
+    digitalWrite(motorET1, HIGH);
+    digitalWrite(motorET2, LOW);
+
+    digitalWrite(motorDT2, LOW);
+    digitalWrite(motorDT1, HIGH);
+  }
+  if (direcao == -90) {
+    //esquerda girar 90
+    digitalWrite(motorEF1, LOW);
+    digitalWrite(motorEF2, HIGH);
+
+    digitalWrite(motorDF2, HIGH);
+    digitalWrite(motorDF1, LOW);
+
+    digitalWrite(motorET1, HIGH);
+    digitalWrite(motorET2, LOW);
+
+    digitalWrite(motorDT2, LOW);
+    digitalWrite(motorDT1, HIGH);
+  }
+  if (direcao == 90) {
+    //direita girar 90
+    digitalWrite(motorEF2, LOW);
+    digitalWrite(motorEF1, HIGH);
+
+    digitalWrite(motorDF1, HIGH);
+    digitalWrite(motorDF2, LOW);
+
+    digitalWrite(motorET2, HIGH);
+    digitalWrite(motorET1, LOW);
+
     digitalWrite(motorDT1, LOW);
+    digitalWrite(motorDT2, HIGH);
   }
   if (direcao == -1) {
     digitalWrite(motorEF1, LOW);
@@ -141,7 +189,9 @@ void direcaoMotores(int direcao) {
 }
 
 
+//direita
 void loop() {
+  //direita
   // erroDistancia já veio do Python
   if (Serial.available()) {
     // Lê uma linha inteira enviada pelo Python
@@ -187,51 +237,36 @@ void loop() {
       velET = constrain(velET, 0, 255);
       velDT = constrain(velDT, 0, 255);
 
-      digitalWrite(motorEF2, LOW);
-      digitalWrite(motorEF1, HIGH);
       analogWrite(enbEF, velEF);
-
-      digitalWrite(motorDF2, HIGH);
-      digitalWrite(motorDF1, LOW);
       analogWrite(enbDF, velDF);
-
-      digitalWrite(motorET2, HIGH);
-      digitalWrite(motorET1, LOW);
       analogWrite(enbET, velET);
-
-      digitalWrite(motorDT2, HIGH);
-      digitalWrite(motorDT1, LOW);
       analogWrite(enbDT, velDT);
+
+      direcaoMotores(1);
 
       delay(100);
     }
 
     if (tagID == 1) {
-      float KpX = 0.5;  // Controle lateral
-      float KpDist = 1.5;
-      if (estado == 0) {
+      float Kpx = 0.3;
+      float Kpdist = 0.25;
+      if (abs(erroX) > toleranciaX) {
         Vx = 0;
-        W = KpX * abs(erroX);
-        float velocidF = 120 + W;
-        float velocidT = 100 + W;
-
-        velocidF = constrain(velocidF, 0, 255);
-        velocidT = constrain(velocidT, 0, 255);
-
-        analogWrite(enbEF, velocidF);
-        analogWrite(enbDF, velocidF);
-        analogWrite(enbET, velocidT);
-        analogWrite(enbDT, velocidT);
+        W = Kpx * abs(erroX);
+        float velocid = 90 + W;
+        velocid = constrain(velocid, 0, 255);
+        analogWrite(enbEF, velocid);
+        analogWrite(enbDF, velocid);
+        analogWrite(enbET, velocid);
+        analogWrite(enbDT, velocid);
         if (erroX > 0) {
-          direcaoMotores(4);  //ESQUERDA
+          direcaoMotores(3);
         }
         if (erroX < 0) {
-          direcaoMotores(3);  //DIREITA
-        }
-        if (abs(erroX) < toleranciaX) {
-          direcaoMotores(-1);
+          direcaoMotores(4);
         }
       }
+      direcaoMotores(-1);
     }
     //===============GIRAR 180 GRAUS ====================
     if (tagID == 2) {
@@ -241,27 +276,9 @@ void loop() {
         analogWrite(enbDF, velBase);
         analogWrite(enbET, velBase);
         analogWrite(enbDT, velBase);
-
-        digitalWrite(motorEF2, LOW);
-        digitalWrite(motorEF1, HIGH);
-
-        digitalWrite(motorDF2, LOW);
-        digitalWrite(motorDF1, HIGH);
-
-        digitalWrite(motorET2, HIGH);
-        digitalWrite(motorET1, LOW);
-
-        digitalWrite(motorDT2, LOW);
-        digitalWrite(motorDT1, HIGH);
+        direcaoMotores(180);
         delay(1600);
-        digitalWrite(motorEF1, LOW);
-        digitalWrite(motorEF2, LOW);
-        digitalWrite(motorDF1, LOW);
-        digitalWrite(motorDF2, LOW);
-        digitalWrite(motorET1, LOW);
-        digitalWrite(motorET2, LOW);
-        digitalWrite(motorDT1, LOW);
-        digitalWrite(motorDT2, LOW);
+        direcaoMotores(-1);
         girar180 = true;
       }
     }
@@ -273,27 +290,9 @@ void loop() {
         analogWrite(enbDF, velBase);
         analogWrite(enbET, velBase);
         analogWrite(enbDT, velBase);
-
-        digitalWrite(motorEF1, LOW);
-        digitalWrite(motorEF2, HIGH);
-
-        digitalWrite(motorDF1, LOW);
-        digitalWrite(motorDF2, HIGH);
-
-        digitalWrite(motorET1, HIGH);
-        digitalWrite(motorET2, LOW);
-
-        digitalWrite(motorDT1, LOW);
-        digitalWrite(motorDT2, HIGH);
+        direcaoMotores(90);
         delay(800);
-        digitalWrite(motorEF1, LOW);
-        digitalWrite(motorEF2, LOW);
-        digitalWrite(motorDF1, LOW);
-        digitalWrite(motorDF2, LOW);
-        digitalWrite(motorET1, LOW);
-        digitalWrite(motorET2, LOW);
-        digitalWrite(motorDT1, LOW);
-        digitalWrite(motorDT2, LOW);
+        direcaoMotores(-1);
         girar90D = true;
       }
     }
@@ -305,39 +304,14 @@ void loop() {
         analogWrite(enbDF, velBase);
         analogWrite(enbET, velBase);
         analogWrite(enbDT, velBase);
-
-        digitalWrite(motorEF2, LOW);
-        digitalWrite(motorEF1, HIGH);
-
-        digitalWrite(motorDF2, LOW);
-        digitalWrite(motorDF1, HIGH);
-
-        digitalWrite(motorET2, HIGH);
-        digitalWrite(motorET1, LOW);
-
-        digitalWrite(motorDT2, LOW);
-        digitalWrite(motorDT1, HIGH);
+        direcaoMotores(-90);
         delay(800);
-        digitalWrite(motorEF1, LOW);
-        digitalWrite(motorEF2, LOW);
-        digitalWrite(motorDF1, LOW);
-        digitalWrite(motorDF2, LOW);
-        digitalWrite(motorET1, LOW);
-        digitalWrite(motorET2, LOW);
-        digitalWrite(motorDT1, LOW);
-        digitalWrite(motorDT2, LOW);
+        direcaoMotores(-1);
         girar90E = true;
       }
     }
     if (tagID == -1) {
-      digitalWrite(motorEF1, LOW);
-      digitalWrite(motorEF2, LOW);
-      digitalWrite(motorDF1, LOW);
-      digitalWrite(motorDF2, LOW);
-      digitalWrite(motorET1, LOW);
-      digitalWrite(motorET2, LOW);
-      digitalWrite(motorDT1, LOW);
-      digitalWrite(motorDT2, LOW);
+      direcaoMotores(-1);
     }
   }
 }

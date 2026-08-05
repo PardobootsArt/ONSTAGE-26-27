@@ -41,7 +41,7 @@ if porta_arduino:
     arduino = serial.Serial(porta_arduino, 9600)
 
     # Sempre esperamos alguns segundos.
-    # Quando abrimos a Serial, o Arduino reinicia.
+    # Quando abrimos a Serial, o Arduino reinicia
     time.sleep(2)
 
     print(f"Arduino conectado em {porta_arduino}")
