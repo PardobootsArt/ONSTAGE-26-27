@@ -132,12 +132,16 @@ void loop() {
       digitalWrite (motorE1, HIGH);
       digitalWrite (motorE2, LOW);
       digitalWrite (motorD1, LOW);
-      digitalWrite (motorD2, HIGH);
-
+      digitalWrite (motorD2, LOW);
       delay (1000);
       digitalWrite (motorE1, LOW);
       digitalWrite (motorE2, LOW);
       digitalWrite (motorD1, LOW);
+      digitalWrite (motorD2, LOW);
+      delay(1000);
+      digitalWrite (motorE1, HIGH);
+      digitalWrite (motorE2, LOW);
+      digitalWrite (motorD1, HIGH);
       digitalWrite (motorD2, LOW);
     }
   }
