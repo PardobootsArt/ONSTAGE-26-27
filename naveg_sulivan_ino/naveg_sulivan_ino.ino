@@ -1,424 +1,254 @@
-//giroscopio
-#include <Wire.h>
+const int s0 = 40;
+const int s1 = 42;
+const int s2 = 44;
+const int s3 = 46;
+const int out = 41;
 
-const int MPU = 0x68;
+//Pinos do led RGB
+int Pin_RED = 7;
+int Pin_GREEN = 8;
+int Pin_BLUE = 9;
 
-float anguloZ = 0.0;
-unsigned long ultimoTempo;
+//Variaveis cores
+int red = 0;
+int green = 0;
+int blue = 0;
+bool camuflagemRandall = false;
 
-float offsetGz = 0;
+// motores
+int motorE1 = 22;
+int motorE2 = 24;
+int motorD1 = 26;
+int motorD2 = 28;
+int enbE = 11;
+int enbD = 10;
 
-//radar
-#include <Servo.h>
+// Define os pinos Trig e Echo do sensor ultrassônico
+const int trigPin = 3;
+const int echoPin = 4;
 
-Servo meuServo;
+const int trigPin2 = 5;
+const int echoPin2 = 6;
+// Variáveis para a duração e a distância
+long durationF;
+int distFrente;
+long durationT;
+int distTras;
 
-#define TRIG 3
-#define ECHO 2
-int posicaoAtual = 25;
-bool sentidoHorario = true;
-
-//correcao
 float Kp = 5.0;
-float Kd = 0.5;
-int cronometro;
 
-//FUNÇÕES DA PROGRAMAÇÃO
-int lerDistancia() {
-  digitalWrite(TRIG, LOW);
-  delayMicroseconds(2);
+int velocidadeBase = 60;
 
-  digitalWrite(TRIG, HIGH);
-  delayMicroseconds(10);
-
-  digitalWrite(TRIG, LOW);
-
-  long duracao = pulseIn(ECHO, HIGH);
-
-  return duracao * 0.034 / 2;
-}
-
-bool varreduraCompleta = false;
-int procurarObjeto() {
-
-  while (true) {
-
-    meuServo.write(posicaoAtual);
-    delay(15);
-
-    int distancia = lerDistancia();
-
-    if (distancia > 0 && distancia < 20) {
-
-      delay(1000);  // pausa olhando para o objeto
-      varreduraCompleta = false;
-      return posicaoAtual;
-    }
-
-    if (sentidoHorario) {
-
-      posicaoAtual += 4;
-
-      if (posicaoAtual >= 155) {
-        posicaoAtual = 155;
-        sentidoHorario = false;
-      }
-
-    } else {
-
-      posicaoAtual -= 4;
-
-      if (posicaoAtual <= 25) {
-        posicaoAtual = 25;
-        sentidoHorario = true;
-        varreduraCompleta = true;
-      }
-    }
-  }
-  return -1;
-}
-
-
-//FUNÇÃO PARA O GIROSCÓPIO
-void iniciarMPU() {
-  Wire.begin();
-
-  Wire.beginTransmission(MPU);
-  Wire.write(0x6B);
-  Wire.write(0);
-  Wire.endTransmission(true);
-
-  // Calibração do giroscópio
-  long soma = 0;
-
-  for (int i = 0; i < 1000; i++) {
-    Wire.beginTransmission(MPU);
-    Wire.write(0x47);  // GyZ
-    Wire.endTransmission(false);
-    Wire.requestFrom(MPU, 2, true);
-
-    int16_t Gz = Wire.read() << 8 | Wire.read();
-
-    soma += Gz;
-    delay(2);
-  }
-
-  offsetGz = soma / 1000.0;
-
-  anguloZ = 0;
-  ultimoTempo = micros();
-}
-
-float obterAngulo() {
-
-  Wire.beginTransmission(MPU);
-  Wire.write(0x47);
-  Wire.endTransmission(false);
-  Wire.requestFrom(MPU, 2, true);
-
-  int16_t Gz = Wire.read() << 8 | Wire.read();
-
-  float velocidadeAngular = (Gz - offsetGz) / 131.0;
-
-  unsigned long agora = micros();
-  float dt = (agora - ultimoTempo) / 1000000.0;
-  ultimoTempo = agora;
-
-  anguloZ += velocidadeAngular * dt;
-
-  while (anguloZ >= 360)
-    anguloZ -= 360;
-
-  while (anguloZ < 0)
-    anguloZ += 360;
-
-
-  // Converte para -180 a +180
-  float anguloCorrigido = anguloZ;
-
-  if (anguloCorrigido > 180)
-    anguloCorrigido -= 360;
-
-  return anguloCorrigido;
-}
-
-// MOTORES
-int motorDF1 = 26;
-int motorDF2 = 28;
-int motorEF1 = 22;
-int motorEF2 = 24;
-int motorDT1 = 34;
-int motorDT2 = 36;
-int motorET1 = 30;
-int motorET2 = 32;
-
-int enbEF = 13;
-int enbDF = 12;
-int enbET = 11;
-int enbDT = 10;
-
-int servo = 38;
+int distBase = 10;
 
 void setup() {
-  //CRONOMETRO
-  cronometro = 0;
+  // put your setup code here, to run once:
+  pinMode (motorE1, OUTPUT);
+  pinMode (motorE2, OUTPUT);
+  pinMode (motorD1, OUTPUT);
+  pinMode (motorD2, OUTPUT);
+  pinMode (enbE, OUTPUT);
+  pinMode (enbD, OUTPUT);
 
-  //COMUNICAÇÃO
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  pinMode(trigPin2, OUTPUT);
+  pinMode(echoPin2, INPUT);
   Serial.begin(9600);
-  Serial2.begin(9600);
+  //Led e sensor de cor
+  pinMode(s0, OUTPUT);
+  pinMode(s1, OUTPUT);
+  pinMode(s2, OUTPUT);
+  pinMode(s3, OUTPUT);
+  pinMode(out, INPUT);
+  pinMode(Pin_RED, OUTPUT);
+  pinMode(Pin_GREEN, OUTPUT);
+  pinMode(Pin_BLUE, OUTPUT);
+  Serial.begin(9600);
+  digitalWrite(s0, HIGH);
+  digitalWrite(s1, LOW);
 
+  digitalWrite (motorE1, HIGH);
+  digitalWrite (motorE2, LOW);
+  digitalWrite (motorD1, HIGH);
+  digitalWrite (motorD2, LOW);
 
-  iniciarMPU();
-
-  Serial.println("MPU pronto!");
-
-  //RADAR
-  pinMode(TRIG, OUTPUT);
-  pinMode(ECHO, INPUT);
-
-  meuServo.attach(servo);
-  meuServo.write(90);
-  delay(300);
-
-  //MOTORES
-  pinMode(motorEF1, OUTPUT);
-  pinMode(motorEF2, OUTPUT);
-  pinMode(motorDF1, OUTPUT);
-  pinMode(motorDF2, OUTPUT);
-  pinMode(motorET1, OUTPUT);
-  pinMode(motorET2, OUTPUT);
-  pinMode(motorDT1, OUTPUT);
-  pinMode(motorDT2, OUTPUT);
-
-  pinMode(enbEF, OUTPUT);
-  pinMode(enbDF, OUTPUT);
-  pinMode(enbET, OUTPUT);
-  pinMode(enbDT, OUTPUT);
-
-  pinMode(20, INPUT);
-  pinMode(21, INPUT);
-}
-
-void temporizador(int Z, int C) {
-  if (C == 1) {
-    cronometro++;
-  } else if (Z == 1) {
-    cronometro = 0;
-  }
-}
-
-void esquerda(int velo, int tempo) {
-  temporizador(1, 0);
-  float ultimoError = 0;
-  while (cronometro < tempo) {
-    temporizador(0, 1);
-    float error = obterAngulo();
-    Serial.print(" Error: ");
-    Serial.print(obterAngulo());
-    Serial.print("Tempo: ");
-    Serial.print(cronometro);
-    float correcaoP = Kp * error;
-    float correcaoD = Kd * (error - ultimoError);
-    float correcaoFinal = correcaoP + correcaoD;
-    float velDir = velo - correcaoFinal;
-    float velEsq = velo + correcaoFinal;
-    velEsq = constrain(velEsq, 0, 255);
-    velDir = constrain(velDir, 0, 255);
-    Serial.print(" Direita: ");
-    Serial.print(velDir);
-    Serial.print(" Esquerda: ");
-    Serial.println(velEsq);
-    analogWrite(enbEF, velEsq);
-    analogWrite(enbDF, velDir);
-    analogWrite(enbET, velEsq);
-    analogWrite(enbDT, velDir);
-    digitalWrite(motorEF1, LOW);
-    digitalWrite(motorEF2, HIGH);
-    digitalWrite(motorDF1, LOW);
-    digitalWrite(motorDF2, HIGH);
-    digitalWrite(motorET1, LOW);
-    digitalWrite(motorET2, HIGH);
-    digitalWrite(motorDT1, LOW);
-    digitalWrite(motorDT2, HIGH);
-    ultimoError = error;
-  }
-  digitalWrite(motorEF1, LOW);
-  digitalWrite(motorEF2, LOW);
-  digitalWrite(motorDF1, LOW);
-  digitalWrite(motorDF2, LOW);
-  digitalWrite(motorET1, LOW);
-  digitalWrite(motorET2, LOW);
-  digitalWrite(motorDT1, LOW);
-  digitalWrite(motorDT2, LOW);
-}
-
-void direita(int velo, int tempo) {
-  temporizador(1, 0);
-  float ultimoError = 0;
-  while (cronometro < tempo) {
-    temporizador(0, 1);
-    float error = obterAngulo();
-    Serial.print(" Error: ");
-    Serial.print(obterAngulo());
-    Serial.print("Tempo: ");
-    Serial.print(cronometro);
-    float correcaoP = Kp * error;
-    float correcaoD = Kd * (error - ultimoError);
-    float correcaoFinal = correcaoP + correcaoD;
-    float velDir = velo + correcaoFinal;
-    float velEsq = velo - correcaoFinal;
-    velEsq = constrain(velEsq, 0, 255);
-    velDir = constrain(velDir, 0, 255);
-    Serial.print(" Direita: ");
-    Serial.print(velDir);
-    Serial.print(" Esquerda: ");
-    Serial.println(velEsq);
-    analogWrite(enbEF, velEsq);
-    analogWrite(enbDF, velDir);
-    analogWrite(enbET, velEsq);
-    analogWrite(enbDT, velDir);
-    digitalWrite(motorEF1, HIGH);
-    digitalWrite(motorEF2, LOW);
-    digitalWrite(motorDF1, HIGH);
-    digitalWrite(motorDF2, LOW);
-    digitalWrite(motorET1, HIGH);
-    digitalWrite(motorET2, LOW);
-    digitalWrite(motorDT1, HIGH);
-    digitalWrite(motorDT2, LOW);
-    ultimoError = error;
-  }
-
-  digitalWrite(motorEF1, LOW);
-  digitalWrite(motorEF2, LOW);
-  digitalWrite(motorDF1, LOW);
-  digitalWrite(motorDF2, LOW);
-  digitalWrite(motorET1, LOW);
-  digitalWrite(motorET2, LOW);
-  digitalWrite(motorDT1, LOW);
-  digitalWrite(motorDT2, LOW);
-}
-
-void frente(int velo, int tempo) {
-  temporizador(1, 0);
-  float ultimoError = 0;
-  while (cronometro < tempo) {
-    float error = obterAngulo();
-    Serial.print(" Angulo: ");
-    Serial.print(error);
-    temporizador(0, 1);
-    Serial.print(" Tempo: ");
-    Serial.print(cronometro);
-    float correcaoP = Kp * error;
-    float correcaoD = Kd * (error - ultimoError);
-    float correcaoFinal = correcaoP + correcaoD;
-    float velDir = velo + correcaoFinal;
-    float velEsq = velo - correcaoFinal;
-    velEsq = constrain(velEsq, 0, 255);
-    velDir = constrain(velDir, 0, 255);
-    Serial.print(" Direita: ");
-    Serial.print(velDir);
-    Serial.print(" Esquerda: ");
-    Serial.println(velEsq);
-    analogWrite(enbEF, velEsq);
-    analogWrite(enbDF, velEsq);
-    analogWrite(enbET, velDir);
-    analogWrite(enbDT, velDir);
-    digitalWrite(motorEF1, HIGH);
-    digitalWrite(motorEF2, LOW);
-    digitalWrite(motorDF1, LOW);
-    digitalWrite(motorDF2, HIGH);
-    digitalWrite(motorET1, LOW);
-    digitalWrite(motorET2, HIGH);
-    digitalWrite(motorDT1, HIGH);
-    digitalWrite(motorDT2, LOW);
-    ultimoError = error;
-  }
-
-  digitalWrite(motorEF1, LOW);
-  digitalWrite(motorEF2, LOW);
-  digitalWrite(motorDF1, LOW);
-  digitalWrite(motorDF2, LOW);
-  digitalWrite(motorET1, LOW);
-  digitalWrite(motorET2, LOW);
-  digitalWrite(motorDT1, LOW);
-  digitalWrite(motorDT2, LOW);
-}
-
-
-void tras(int velo, int tempo) {
-  temporizador(1, 0);
-  float ultimoError = 0;
-  while (cronometro < tempo) {
-    float error = obterAngulo();
-    Serial.print(" Angulo: ");
-    Serial.print(error);
-    temporizador(0, 1);
-    Serial.print(" Tempo: ");
-    Serial.print(cronometro);
-    float correcaoP = Kp * error;
-    float correcaoD = Kd * (error - ultimoError);
-    float correcaoFinal = correcaoP + correcaoD;
-    float velDir = velo - correcaoFinal;
-    float velEsq = velo + correcaoFinal;
-    velEsq = constrain(velEsq, 0, 255);
-    velDir = constrain(velDir, 0, 255);
-    Serial.print(" Direita: ");
-    Serial.print(velDir);
-    Serial.print(" Esquerda: ");
-    Serial.println(velEsq);
-    analogWrite(enbEF, velEsq);
-    analogWrite(enbDF, velEsq);
-    analogWrite(enbET, velDir);
-    analogWrite(enbDT, velDir);
-    digitalWrite(motorEF2, HIGH);
-    digitalWrite(motorEF1, LOW);
-    digitalWrite(motorDF2, LOW);
-    digitalWrite(motorDF1, HIGH);
-    digitalWrite(motorET2, LOW);
-    digitalWrite(motorET1, HIGH);
-    digitalWrite(motorDT2, HIGH);
-    digitalWrite(motorDT1, LOW);
-    ultimoError = error;
-  }
-
-  digitalWrite(motorEF1, LOW);
-  digitalWrite(motorEF2, LOW);
-  digitalWrite(motorDF1, LOW);
-  digitalWrite(motorDF2, LOW);
-  digitalWrite(motorET1, LOW);
-  digitalWrite(motorET2, LOW);
-  digitalWrite(motorDT1, LOW);
-  digitalWrite(motorDT2, LOW);
-}
-
-int calcularTempo(int angulo) {
-
-  int erro = abs(angulo - 90);
-  float fator = cos(radians(erro));
-  int tempo = 15 * cos(radians(abs(angulo - 90)));
-  tempo = constrain(tempo, 5, 20);
-  return tempo;
-}
-
-bool frenteLivre() {
-
-  meuServo.write(90);  // Centraliza o sensor
-  delay(80);           // Tempo suficiente para o servo chegar
-
-  int distancia = lerDistancia();
-
-  if (distancia > 20 || distancia == 0) {
-    return true;  // Frente livre
-  }
-
-  return false;  // Ainda há obstáculo
 }
 
 void loop() {
 
-  if (Serial2.available()) {
-    int value = Serial2.parseInt();
-    Serial.print("recebi: ");
-    Serial.println(value);
+  //Detecta a cor
+  color();
+
+  if (camuflagemRandall == false) {
+    Serial.print("Vermelho :");
+    Serial.print(red, DEC);
+    Serial.print(" Verde : ");
+    Serial.print(green, DEC);
+    Serial.print(" Azul : ");
+    Serial.print(blue, DEC);
+    Serial.println();
+    Serial.println("Procurando Verde");
+    AcenderLed(175, 0, 255);
+
+    //motores
+    distFrente = calDistanciaF ();
+    distTras = calDistanciaT ();
+
+
+   int erro = (distFrente - distTras) * (-1);   
+   int correcao = Kp * erro;
+
+    int velEsq = velocidadeBase + correcao;
+    int velDir = velocidadeBase - correcao;
+
+    velEsq = constrain(velEsq, 0, 255);
+    velDir = constrain(velDir, 0, 255);
+
+    analogWrite(enbE, velEsq);
+    analogWrite(enbD, velDir);
+
+    Serial.print("Erro: ");
+    Serial.print(erro);
+
+   Serial.print("  Esq: ");
+   Serial.print(velEsq);
+
+   Serial.print("  Dir: ");
+    Serial.println(velDir);
+
+    delay(10);
+    if (green > 180 && green < 600 && red > 300 && green < blue) {
+      camuflagemRandall = true;
+      Serial.println("Iniciando Camuflagem Randall...");
+      delay(50);
+      digitalWrite (motorE1, LOW);
+      digitalWrite (motorE2, LOW);
+      digitalWrite (motorD1, LOW);
+      digitalWrite (motorD2, LOW);
+      delay (500);
+      analogWrite (enbE, 200);
+      analogWrite (enbD, 200);
+      digitalWrite (motorE1, HIGH);
+      digitalWrite (motorE2, LOW);
+      digitalWrite (motorD1, LOW);
+      digitalWrite (motorD2, HIGH);
+
+      delay (1000);
+      
+      digitalWrite (motorE1, HIGH);
+      digitalWrite (motorE2, LOW);
+      digitalWrite (motorD1, HIGH);
+      digitalWrite (motorD2, LOW);
+    }
   }
+
+  if (camuflagemRandall == true) {
+
+    Serial.print("Vermelho :");
+    Serial.print(red, DEC);
+    Serial.print(" Verde : ");
+    Serial.print(green, DEC);
+    Serial.print(" Azul : ");
+    Serial.print(blue, DEC);
+    Serial.println();
+
+    //Verifica se a cor branca foi detectada
+    if (red < 100 && green < 100 && blue < 100) {
+      Serial.println("BRANCO");
+      AcenderLed(175, 0, 255);
+    }
+    //Verifica se a cor amarela foi detectada
+    else if (red < 60 && green < 100 && green < blue) {
+      Serial.println("AMARELO");
+      AcenderLed(255, 110, 0);
+    }
+    //Verifica se a cor vermelha foi detectada
+    else if (red < blue && blue < green && red < 100) {
+      Serial.println("VERMELHO");
+      AcenderLed(255, 0, 0);
+    }
+
+    //Verifica se a cor azul foi detectada
+    else if (blue < red && blue < green && blue < 1000) {
+      Serial.println("AZUL");
+      AcenderLed(0, 0, 255);
+    }
+
+  }
+  Serial.println();
+
+  //Delay para apagar os leds e reiniciar o processo
+  delay(300);
+
+  
 }
+
+
+void color() {
+  //Rotina que le o valor das cores
+  digitalWrite(s2, LOW);
+  digitalWrite(s3, LOW);
+  //count OUT, pRed, RED
+  red = pulseIn(out, digitalRead(out) == HIGH ? LOW : HIGH);
+  digitalWrite(s3, HIGH);
+  //count OUT, pBLUE, BLUE
+  blue = pulseIn(out, digitalRead(out) == HIGH ? LOW : HIGH);
+  digitalWrite(s2, HIGH);
+  //count OUT, pGreen, GREEN
+  green = pulseIn(out, digitalRead(out) == HIGH ? LOW : HIGH);
+}
+
+void AcenderLed(int R, int G, int B) {
+  analogWrite(Pin_RED, R);
+  analogWrite(Pin_GREEN, G);
+  analogWrite(Pin_BLUE, B);
+}
+  
+
+
+int calDistanciaF() {
+
+    digitalWrite(trigPin, LOW);
+    delayMicroseconds(2);
+    // Define o trigPin no estado HIGH por 10 micro segundos
+    digitalWrite(trigPin, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(trigPin, LOW);
+    durationF = pulseIn(echoPin, HIGH);  // Lê o echoPin, retorna o tempo de viagem da onda sonora em microssegundos
+    distFrente = durationF * 0.034 / 2;
+    return distFrente;
+  }
+
+  int calDistanciaT() {
+
+    digitalWrite(trigPin2, LOW);
+    delayMicroseconds(2);
+    // Define o trigPin no estado HIGH por 10 micro segundos
+    digitalWrite(trigPin2, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(trigPin2, LOW);
+    durationT = pulseIn(echoPin2, HIGH);  // Lê o echoPin, retorna o tempo de viagem da onda sonora em microssegundos
+    distTras = durationT * 0.034 / 2;
+    return distTras;
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// 
