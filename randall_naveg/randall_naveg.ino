@@ -169,13 +169,13 @@ void loop() {
     //Verifica se a cor vermelha foi detectada
     else if (red < blue && blue < green && red < 100) {
       Serial.println("VERMELHO");
-      AcenderLed(255, 0, 0);
+      AcenderLed(255, 0, 150);
     }
 
     //Verifica se a cor azul foi detectada
     else if (blue < red && blue < green && blue < 1000) {
       Serial.println("AZUL");
-      AcenderLed(0, 0, 255);
+      AcenderLed(64, 208, 224);
     }
 
   }
