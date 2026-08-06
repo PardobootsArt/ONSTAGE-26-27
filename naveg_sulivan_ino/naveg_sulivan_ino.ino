@@ -31,7 +31,7 @@ Servo meuServo;
 int posicaoAtual = 25;
 bool sentidoHorario = true;
 int contagemObjeto;
-int repeticao = 0;
+int repeticao;
 
 //===========CORREÇÃO===========
 float Kp = 1.2;
@@ -87,32 +87,31 @@ int lerDistancia() {
 bool varreduraCompleta = false;
 
 int procurarObjeto() {
-
   while (true) {
-    int posTronco = posicaoAtual * (-2);
-    girarTronco(110, posTronco);
     meuServo.write(posicaoAtual);
+    int oi = posicaoAtual * (-2);
+    girarTronco(110, oi);
     delay(15);
 
     int distancia = lerDistancia();
 
-    if (distancia > 0 && distancia < 30) {
+    if (distancia > 0 && distancia < 20) {
 
       delay(150);
       varreduraCompleta = false;
       return posicaoAtual;
     }
 
-    if (sentidoHorario) {
+    if (sentidoHorario == true) {
 
       posicaoAtual += 4;
 
-      if (posicaoAtual >= 155) {
+      if (posicaoAtual >= 145) {
         posicaoAtual = 155;
         sentidoHorario = false;
       }
 
-    } else {
+    } else if (sentidoHorario == false) {
 
       posicaoAtual -= 4;
 
@@ -239,7 +238,7 @@ void setup() {
   pinMode(ECHO, INPUT);
 
   meuServo.attach(servo);
-  meuServo.write(25);
+  meuServo.write(90);
   delay(300);
 
   //==============MOTORES=================
@@ -260,6 +259,7 @@ void setup() {
   pinMode(20, INPUT);
   pinMode(21, INPUT);
   contagemObjeto = 0;
+  repeticao = 0;
   //frente (80, 1000);
   analogWrite(enbtronco, 175);
   delay(150);
@@ -346,7 +346,6 @@ void direita(int velo, int tempoMs) {
     digitalWrite(motorET2, LOW);
     digitalWrite(motorDT1, HIGH);
     digitalWrite(motorDT2, LOW);
-    
   }
   pararMotores();
 }
@@ -432,6 +431,6 @@ bool frenteLivre() {
 }
 
 void loop() {
-  delay(1000);
-  tras(105, 2000);
+  int oi = procurarObjeto();
+  Serial.println(oi);
 }
