@@ -431,6 +431,14 @@ bool frenteLivre() {
 }
 
 void loop() {
-  int oi = procurarObjeto();
-  Serial.println(oi);
+  if (Serial2.available()) {
+    int recieve = Serial2.parseInt();
+    if (recieve == 3) {
+      delay(3000);
+      direita(100, 2500);
+      delay(500);
+      esquerda(100, 1000);
+      delay(10000);
+    }
+  }
 }
