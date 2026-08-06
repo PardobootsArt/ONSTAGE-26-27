@@ -131,6 +131,7 @@ void loop() {
     }
 
     if (tagID == 1){
+      //levantar braco e girar
       digitalWrite(motorEF1, LOW);
       digitalWrite(motorEF2, LOW);
       digitalWrite(motorDF1, LOW);
@@ -139,6 +140,9 @@ void loop() {
       digitalWrite(motorET2, LOW);
       digitalWrite(motorDT1, LOW);
       digitalWrite(motorDT2, LOW);
+    }
+    if (tagID == 2){
+      //
     }
   }
 }

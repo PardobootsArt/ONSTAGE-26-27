@@ -1,6 +1,4 @@
 #include <SoftwareSerial.h>
-
-
 // Pinos do sensor ultrassônico
 const int trigPin = 10;
 const int echoPin = 9;
@@ -22,10 +20,8 @@ float distance;
 bool objetoDetectado = false;
 
 void setup() {
-  espSerial.begin (9600);
+  Serial.begin (9600);
   // Inicia a comunicação com o Monitor Serial
-  Serial.begin(9600);
-
   // Define os pinos do ultrassônico
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
@@ -73,15 +69,13 @@ void loop() {
   // 2. Ainda não tiver sido detectado anteriormente
   if (distance < 10 && objetoDetectado == false) {
     Serial.println (1);
-    espSerial.println (1);
-    Serial.println ("enviado: 1");
     // Marca que o objeto já foi detectado
     // Assim o motor não será acionado novamente
     objetoDetectado = true;
 
     // Liga o LED e mantém aceso
     digitalWrite(led, HIGH);
-
+    delay(1500);
     // Define o sentido de rotação do motor
     digitalWrite(IN1, LOW);
     digitalWrite(IN2, HIGH);
@@ -90,7 +84,7 @@ void loop() {
     analogWrite(ENB, 120);
 
     // Mantém o motor ligado por 2 segundos
-    delay(1600);
+    delay(1800);
 
     // Desliga o motor
     digitalWrite(IN1, LOW);

@@ -45,7 +45,7 @@ int distBase = 7;
 void setup() {
   // put your setup code here, to run once:
 
-  Serial2.begin(9600);
+  Serial2.begin(115200);
   pinMode(motorE1, OUTPUT);
   pinMode(motorE2, OUTPUT);
   pinMode(motorD1, OUTPUT);
@@ -57,7 +57,7 @@ void setup() {
   pinMode(echoPin, INPUT);
   pinMode(trigPin2, OUTPUT);
   pinMode(echoPin2, INPUT);
-  Serial.begin(9600);
+  Serial.begin(115200);
   //Led e sensor de cor
   pinMode(s0, OUTPUT);
   pinMode(s1, OUTPUT);
@@ -75,10 +75,8 @@ void setup() {
   digitalWrite(motorD1, HIGH);
   digitalWrite(motorD2, LOW);
 }
-
+//=========================VOID LOOP===================
 void loop() {
-
-  //Detecta a cor
   color();
   if (Serial2.available()) {
     int recieve = Serial2.parseInt();

@@ -1,7 +1,5 @@
 //giroscopio
 #include <Wire.h>
-#include <SoftwareSerial.h>
-
 const int MPU = 0x68;
 
 float anguloZ = 0.0;
@@ -33,6 +31,7 @@ Servo meuServo;
 int posicaoAtual = 25;
 bool sentidoHorario = true;
 int contagemObjeto;
+int repeticao = 0;
 
 //===========CORREÇÃO===========
 float Kp = 1.2;
@@ -90,8 +89,8 @@ bool varreduraCompleta = false;
 int procurarObjeto() {
 
   while (true) {
-    int posTronco=posicaoAtual*10;
-    girarTronco (90, posTronco);
+    int posTronco = posicaoAtual * (-2);
+    girarTronco(110, posTronco);
     meuServo.write(posicaoAtual);
     delay(15);
 
@@ -192,26 +191,26 @@ float obterAngulo() {
 }
 
 // ==================MOTORES====================
-int motorDF1 = 26;
-int motorDF2 = 28;
-int motorEF1 = 22;
-int motorEF2 = 24;
-int motorDT1 = 34;
-int motorDT2 = 36;
-int motorET1 = 30;
-int motorET2 = 32;
+int motorEF1 = 26;
+int motorEF2 = 28;
+int motorET1 = 22;
+int motorET2 = 24;
+int motorDF1 = 34;
+int motorDF2 = 36;
+int motorDT1 = 30;
+int motorDT2 = 32;
 
-int enbEF = 13;
-int enbDF = 12;
-int enbET = 11;
-int enbDT = 10;
+int enbET = 13;
+int enbEF = 12;
+int enbDT = 11;
+int enbDF = 10;
 
 int servo = 38;
 //===============================================SETUP=========================================
 void setup() {
   //COMUNICAÇÃO
-  Serial.begin(9600);
-  Serial2.begin(9600);
+  Serial.begin(115200);
+  Serial2.begin(115200);
 
   iniciarMPU();
   Serial.println("MPU pronto!");
@@ -295,7 +294,7 @@ void pararMotores() {
   digitalWrite(motorDT1, LOW);
   digitalWrite(motorDT2, LOW);
 }
-
+//ok
 void esquerda(int velo, int tempoMs) {
   anguloReferencia = obterAngulo();
   ultimoErro = 0;
@@ -303,27 +302,26 @@ void esquerda(int velo, int tempoMs) {
   unsigned long inicio = millis();
   while (millis() - inicio < tempoMs) {
     float c = correcao();
-    ;
     float velDir = velo + c;
     float velEsq = velo - c;
     velEsq = constrain(velEsq, 0, 255);
     velDir = constrain(velDir, 0, 255);
-    digitalWrite(motorEF1, LOW);
-    digitalWrite(motorEF2, HIGH);
-    digitalWrite(motorDF1, LOW);
-    digitalWrite(motorDF2, HIGH);
+    analogWrite(enbEF, velEsq);
+    analogWrite(enbDF, velEsq);
+    analogWrite(enbET, velDir);
+    analogWrite(enbDT, velDir);
+    digitalWrite(motorEF1, HIGH);
+    digitalWrite(motorEF2, LOW);
+    digitalWrite(motorDF1, HIGH);
+    digitalWrite(motorDF2, LOW);
     digitalWrite(motorET1, LOW);
     digitalWrite(motorET2, HIGH);
     digitalWrite(motorDT1, LOW);
     digitalWrite(motorDT2, HIGH);
-    analogWrite(enbEF, velEsq);
-    analogWrite(enbDF, velDir);
-    analogWrite(enbET, velEsq);
-    analogWrite(enbDT, velDir);
   }
   pararMotores();
 }
-
+//ok
 void direita(int velo, int tempoMs) {
   anguloReferencia = obterAngulo();
   ultimoErro = 0;
@@ -336,22 +334,23 @@ void direita(int velo, int tempoMs) {
     float velEsq = velo + c;
     velEsq = constrain(velEsq, 0, 255);
     velDir = constrain(velDir, 0, 255);
-    digitalWrite(motorEF1, HIGH);
-    digitalWrite(motorEF2, LOW);
-    digitalWrite(motorDF1, HIGH);
-    digitalWrite(motorDF2, LOW);
+    analogWrite(enbEF, velEsq);
+    analogWrite(enbDF, velEsq);
+    analogWrite(enbET, velDir);
+    analogWrite(enbDT, velDir);
+    digitalWrite(motorEF1, LOW);
+    digitalWrite(motorEF2, HIGH);
+    digitalWrite(motorDF1, LOW);
+    digitalWrite(motorDF2, HIGH);
     digitalWrite(motorET1, HIGH);
     digitalWrite(motorET2, LOW);
     digitalWrite(motorDT1, HIGH);
     digitalWrite(motorDT2, LOW);
-    analogWrite(enbEF, velEsq);
-    analogWrite(enbDF, velDir);
-    analogWrite(enbET, velEsq);
-    analogWrite(enbDT, velDir);
+    
   }
   pararMotores();
 }
-
+//ok
 void frente(int velo, int tempoMs) {
   anguloReferencia = obterAngulo();
   ultimoErro = 0;
@@ -364,23 +363,22 @@ void frente(int velo, int tempoMs) {
     float velEsq = velo + c;
     velEsq = constrain(velEsq, 0, 255);
     velDir = constrain(velDir, 0, 255);
-    digitalWrite(motorEF1, HIGH);
-    digitalWrite(motorEF2, LOW);
-    digitalWrite(motorDF1, LOW);
-    digitalWrite(motorDF2, HIGH);
+    analogWrite(enbEF, velEsq);
+    analogWrite(enbDF, velDir);
+    analogWrite(enbET, velEsq);
+    analogWrite(enbDT, velDir);
+    digitalWrite(motorEF1, LOW);
+    digitalWrite(motorEF2, HIGH);
+    digitalWrite(motorDF1, HIGH);
+    digitalWrite(motorDF2, LOW);
     digitalWrite(motorET1, LOW);
     digitalWrite(motorET2, HIGH);
     digitalWrite(motorDT1, HIGH);
     digitalWrite(motorDT2, LOW);
-    analogWrite(enbEF, velEsq);
-    analogWrite(enbDF, velEsq);
-    analogWrite(enbET, velDir);
-    analogWrite(enbDT, velDir);
   }
   pararMotores();
 }
-
-
+//ok
 void tras(int velo, int tempoMs) {
   anguloReferencia = obterAngulo();
   ultimoErro = 0;
@@ -393,18 +391,18 @@ void tras(int velo, int tempoMs) {
     float velEsq = velo - c;
     velEsq = constrain(velEsq, 0, 255);
     velDir = constrain(velDir, 0, 255);
-    digitalWrite(motorEF2, HIGH);
-    digitalWrite(motorEF1, LOW);
-    digitalWrite(motorDF2, LOW);
-    digitalWrite(motorDF1, HIGH);
+    analogWrite(enbEF, velEsq);
+    analogWrite(enbDF, velDir);
+    analogWrite(enbET, velEsq);
+    analogWrite(enbDT, velDir);
+    digitalWrite(motorEF2, LOW);
+    digitalWrite(motorEF1, HIGH);
+    digitalWrite(motorDF2, HIGH);
+    digitalWrite(motorDF1, LOW);
     digitalWrite(motorET2, LOW);
     digitalWrite(motorET1, HIGH);
     digitalWrite(motorDT2, HIGH);
     digitalWrite(motorDT1, LOW);
-    analogWrite(enbEF, velEsq);
-    analogWrite(enbDF, velEsq);
-    analogWrite(enbET, velDir);
-    analogWrite(enbDT, velDir);
   }
 
   pararMotores();
@@ -434,8 +432,6 @@ bool frenteLivre() {
 }
 
 void loop() {
-  procurarObjeto();
-  Serial.print("graus: ");
-  Serial.println(degrees);
-  delay(500);
+  delay(1000);
+  tras(105, 2000);
 }

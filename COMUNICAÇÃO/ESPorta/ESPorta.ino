@@ -22,10 +22,7 @@ void OnDataSent(const wifi_tx_info_t *info, esp_now_send_status_t status) {
 }
 
 void setup() {
-
-  Serial.begin(9600);
-
-  Serial2.begin(9600, SERIAL_8N1, 16, 17);
+  Serial.begin(9600, SERIAL_8N1, 16, 17);
 
   pinMode(led, OUTPUT);
 
@@ -60,9 +57,9 @@ void setup() {
 
 void loop() {
 
-  if (Serial2.available()) {
+  if (Serial.available()) {
 
-    int dado = Serial2.parseInt();
+    int dado = Serial.parseInt();
 
     Serial.print("Recebi: ");
     Serial.println(dado);
