@@ -84,7 +84,7 @@ void loop() {
     analogWrite(ENB, 120);
 
     // Mantém o motor ligado por 2 segundos
-    delay(1800);
+    delay(1950);
 
     // Desliga o motor
     digitalWrite(IN1, LOW);

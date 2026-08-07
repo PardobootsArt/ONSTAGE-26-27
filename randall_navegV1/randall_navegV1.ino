@@ -38,7 +38,7 @@ int distTras;
 float Kp = 8.0;
 float Kd = 5.0;
 
-int velocidadeBase = 50;
+int velocidadeBase = 55;
 
 int distBase = 7;
 
@@ -69,7 +69,7 @@ void setup() {
   pinMode(Pin_BLUE, OUTPUT);
   digitalWrite(s0, HIGH);
   digitalWrite(s1, LOW);
-
+  delay(1500);
   digitalWrite(motorE1, HIGH);
   digitalWrite(motorE2, LOW);
   digitalWrite(motorD1, HIGH);
@@ -77,27 +77,143 @@ void setup() {
 }
 //=========================VOID LOOP===================
 void loop() {
-  color();
-  if (Serial2.available()) {
-    int recieve = Serial2.parseInt();
-    Serial.print("recebi: ");
-    Serial.println(recieve);
-    if (recieve == 0) {
-      delay (5000);
-      AcenderLed (255, 105, 180);
-      analogWrite(enbE, 155);
-      analogWrite(enbD, 155);
-      digitalWrite(motorE1, HIGH);
-      digitalWrite(motorE2, LOW);
-      digitalWrite(motorD1, HIGH);
-      digitalWrite(motorD2, LOW);
-      delay(3000);
+  if (camuflagemRandall == false) {
+    AcenderLed(175, 0, 255);
+    //motores
+    distFrente = calDistanciaF();
+    distTras = calDistanciaT();
+    Serial.print(distFrente);
+    Serial.print(" ");
+    Serial.println(distTras);
+
+    int ultimoErro;
+    int erroF = (distFrente - distBase);
+    int erroT = (distTras - distBase);
+    int erro = (erroF + erroT);
+    int correcaoP = Kp * erro;
+    int correcaoD = Kd * (ultimoErro - erro);
+    int correcaoFinal = correcaoP + correcaoD;
+
+    int velEsq = velocidadeBase + correcaoFinal;
+    int velDir = velocidadeBase - correcaoFinal;
+
+    velEsq = constrain(velEsq, 0, 255);
+    velDir = constrain(velDir, 0, 255);
+
+    analogWrite(enbE, velEsq);
+    analogWrite(enbD, velDir);
+    
+    Serial.print("Erro: ");
+
+    Serial.print("  Esq: ");
+    Serial.print(velEsq);
+
+    Serial.print("  Dir: ");
+    Serial.println(velDir);
+    ultimoErro = erro;
+
+    if (green > 230 && green < 400 && red > 350 && green < blue) {
+      camuflagemRandall = true;
+      AcenderLed(0, 255, 0);
+      delay(150);
+      AcenderLed(175, 0, 255);
       digitalWrite(motorE1, LOW);
       digitalWrite(motorE2, LOW);
       digitalWrite(motorD1, LOW);
       digitalWrite(motorD2, LOW);
+      delay(1000);
+      digitalWrite(motorE1, HIGH);
+      digitalWrite(motorE2, LOW);
+      digitalWrite(motorD1, HIGH);
+      digitalWrite(motorD2, LOW);
     }
   }
+
+  if (camuflagemRandall == true) {
+    //motores
+    distFrente = calDistanciaF();
+    distTras = calDistanciaT();
+
+    int ultimoErro;
+    int erroF = (distFrente - distBase);
+    int erroT = (distTras - distBase);
+    int erro = (erroF + erroT);
+    int correcaoP = Kp * erro;
+    int correcaoD = Kd * (ultimoErro - erro);
+    int correcaoFinal = correcaoP + correcaoD;
+
+    int velEsq = velocidadeBase + correcaoFinal;
+    int velDir = velocidadeBase - correcaoFinal;
+
+    velEsq = constrain(velEsq, 0, 255);
+    velDir = constrain(velDir, 0, 255);
+
+    analogWrite(enbE, velEsq);
+    analogWrite(enbD, velDir);
+
+    Serial.print("Erro: ");
+    Serial.print(erro);
+
+    Serial.print("  Dir: ");
+    Serial.print(velEsq);
+
+    Serial.print("  Esq: ");
+    Serial.println(velDir);
+
+    ultimoErro = erro;
+
+
+    //Verifica se a cor branca foi detectada
+    if (red < 100 && green < 100 && blue < 100) {
+      Serial.println("BRANCO");
+      AcenderLed(175, 0, 255);
+    }
+    //Verifica se a cor amarela foi detectada
+    else if (red < 80 && green < 100 && green < blue) {
+      Serial.println("AMARELO");
+      AcenderLed(255, 110, 0);
+      digitalWrite(motorE1, LOW);
+      digitalWrite(motorE2, LOW);
+      digitalWrite(motorD1, LOW);
+      digitalWrite(motorD2, LOW);
+      delay(2000);
+      digitalWrite(motorE1, HIGH);
+      digitalWrite(motorE2, LOW);
+      digitalWrite(motorD1, HIGH);
+      digitalWrite(motorD2, LOW);
+    }
+    //Verifica se a cor vermelha foi detectada
+    else if (red < blue && blue < green && red < 200) {
+      Serial.println("VERMELHO");
+      AcenderLed(255, 105, 180);
+      ;
+      digitalWrite(motorE1, LOW);
+      digitalWrite(motorE2, LOW);
+      digitalWrite(motorD1, LOW);
+      digitalWrite(motorD2, LOW);
+      delay(2000);
+      digitalWrite(motorE1, HIGH);
+      digitalWrite(motorE2, LOW);
+      digitalWrite(motorD1, HIGH);
+      digitalWrite(motorD2, LOW);
+    }
+
+    //Verifica se a cor azul foi detectada
+    else if (blue < red && blue < green && blue < 1000) {
+      Serial.println("AZUL");
+      AcenderLed(0, 0, 255);
+      digitalWrite(motorE1, LOW);
+      digitalWrite(motorE2, LOW);
+      digitalWrite(motorD1, LOW);
+      digitalWrite(motorD2, LOW);
+      delay(2000);
+      digitalWrite(motorE1, HIGH);
+      digitalWrite(motorE2, LOW);
+      digitalWrite(motorD1, HIGH);
+      digitalWrite(motorD2, LOW);
+    }
+  }
+  delay(100);
 }
 
 
