@@ -56,6 +56,14 @@ int estado;
 int toleranciaX = 20;
 int toleranciaDist = 10;
 
+//parte do braço
+#include <Servo.h> //biblioteca
+
+Servo direito; //braço direito
+Servo esquerdo; //braço esquerdo
+
+bool bracosLevantados = false;
+
 void setup() {
   //direita
   Serial.begin(9600);
@@ -75,6 +83,19 @@ void setup() {
   pinMode(enbDT, OUTPUT);
   pinMode(13, OUTPUT);
   estado = 0;
+}
+  //braços:
+  void levantarBracos(){
+  
+  direito.attach(6); 
+  esquerdo.attach(7);
+  esquerdo.write(180);
+  direito.write(0);
+  delay(500);
+  direito.write(90);
+  esquerdo.write(120);
+  delay(500);
+
 }
 void direcaoMotores(int direcao) {
   //direita
@@ -270,6 +291,11 @@ void loop() {
     }
     //===============GIRAR 180 GRAUS ====================
     if (tagID == 2) {
+      
+      if(!bracosLevantados){
+         levantarBracos();
+         bracosLevantados = true;
+      }
       int velBase = 150;
       if (girar180 == false) {
         analogWrite(enbEF, velBase);
