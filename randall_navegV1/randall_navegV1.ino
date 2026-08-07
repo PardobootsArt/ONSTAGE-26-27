@@ -35,11 +35,10 @@ int distFrente;
 long durationT;
 int distTras;
 
-float Kp = 8.0;
-float Kd = 5.0;
+float Kp = 30.0;
+float Kd = 15.0;
 
 int velocidadeBase = 55;
-
 int distBase = 7;
 
 void setup() {
@@ -69,99 +68,114 @@ void setup() {
   pinMode(Pin_BLUE, OUTPUT);
   digitalWrite(s0, HIGH);
   digitalWrite(s1, LOW);
-  delay(1500);
-  digitalWrite(motorE1, HIGH);
-  digitalWrite(motorE2, LOW);
-  digitalWrite(motorD1, HIGH);
-  digitalWrite(motorD2, LOW);
+  AcenderLed(175, 0, 255);
+  
+  while (Serial2.available() == false){
+  }
+  Serial.println("comunicação serialOK");
+  int recieve = Serial2.parseInt();
+  Serial.println(recieve);
+  while(recieve != 3){
+  }
+  delay(5000);
+  analogWrite(enbE, 55);
+  analogWrite(enbD, 55);
+  direcaoMotores(1);
+  delay(6000);
+  direcaoMotores(-1);
+  
+
 }
+void direcaoMotores(int direcao) {
+  if (direcao == -1) {
+    digitalWrite(motorE1, LOW);
+    digitalWrite(motorE2, LOW);
+    digitalWrite(motorD1, LOW);
+    digitalWrite(motorD2, LOW);
+  }
+  if (direcao == 1) {
+    digitalWrite(motorE1, HIGH);
+    digitalWrite(motorE2, LOW);
+    digitalWrite(motorD1, HIGH);
+    digitalWrite(motorD2, LOW);
+  }
+  if (direcao == 2) {
+    digitalWrite(motorE1, HIGH);
+    digitalWrite(motorE2, LOW);
+    digitalWrite(motorD1, LOW);
+    digitalWrite(motorD2, HIGH);
+  }
+}
+
 //=========================VOID LOOP===================
 void loop() {
+  direcaoMotores(1);
   if (camuflagemRandall == false) {
-    AcenderLed(175, 0, 255);
-    //motores
+    color();
+    //===============CERTO CORRECAO (NAO MEXER)=========
     distFrente = calDistanciaF();
     distTras = calDistanciaT();
-    Serial.print(distFrente);
-    Serial.print(" ");
-    Serial.println(distTras);
-
     int ultimoErro;
-    int erroF = (distFrente - distBase);
-    int erroT = (distTras - distBase);
-    int erro = (erroF + erroT);
+    int erro = (distFrente - distTras);
     int correcaoP = Kp * erro;
     int correcaoD = Kd * (ultimoErro - erro);
     int correcaoFinal = correcaoP + correcaoD;
 
     int velEsq = velocidadeBase + correcaoFinal;
     int velDir = velocidadeBase - correcaoFinal;
-
     velEsq = constrain(velEsq, 0, 255);
     velDir = constrain(velDir, 0, 255);
-
     analogWrite(enbE, velEsq);
     analogWrite(enbD, velDir);
-    
-    Serial.print("Erro: ");
-
-    Serial.print("  Esq: ");
-    Serial.print(velEsq);
-
-    Serial.print("  Dir: ");
-    Serial.println(velDir);
     ultimoErro = erro;
 
-    if (green > 230 && green < 400 && red > 350 && green < blue) {
+    Serial.print("Azul ");
+    Serial.print(blue);
+    Serial.print(" vermelho ");
+    Serial.print(red);
+    Serial.print(" verde ");
+    Serial.println(green);
+    if (green > 155 && green < 200 && red > 280 && green < blue) {
+      Serial.println("vi verdeeeeeeeeee");
       camuflagemRandall = true;
       AcenderLed(0, 255, 0);
       delay(150);
       AcenderLed(175, 0, 255);
-      digitalWrite(motorE1, LOW);
-      digitalWrite(motorE2, LOW);
-      digitalWrite(motorD1, LOW);
-      digitalWrite(motorD2, LOW);
+      direcaoMotores(-1);
       delay(1000);
-      digitalWrite(motorE1, HIGH);
-      digitalWrite(motorE2, LOW);
-      digitalWrite(motorD1, HIGH);
-      digitalWrite(motorD2, LOW);
+      analogWrite(enbE, 120);
+      analogWrite(enbD, 120);
+      direcaoMotores(2);
+      delay(1800);
+      direcaoMotores(-1);
     }
   }
-
+  direcaoMotores(1);
   if (camuflagemRandall == true) {
     //motores
+    color();
     distFrente = calDistanciaF();
     distTras = calDistanciaT();
-
     int ultimoErro;
-    int erroF = (distFrente - distBase);
-    int erroT = (distTras - distBase);
-    int erro = (erroF + erroT);
+    int erro = (distFrente - distTras);
     int correcaoP = Kp * erro;
     int correcaoD = Kd * (ultimoErro - erro);
     int correcaoFinal = correcaoP + correcaoD;
 
     int velEsq = velocidadeBase + correcaoFinal;
     int velDir = velocidadeBase - correcaoFinal;
-
     velEsq = constrain(velEsq, 0, 255);
     velDir = constrain(velDir, 0, 255);
-
     analogWrite(enbE, velEsq);
     analogWrite(enbD, velDir);
-
-    Serial.print("Erro: ");
-    Serial.print(erro);
-
-    Serial.print("  Dir: ");
-    Serial.print(velEsq);
-
-    Serial.print("  Esq: ");
-    Serial.println(velDir);
-
     ultimoErro = erro;
 
+    Serial.print("Azul ");
+    Serial.print(blue);
+    Serial.print(" vermelho ");
+    Serial.print(red);
+    Serial.print(" verde ");
+    Serial.println(green);
 
     //Verifica se a cor branca foi detectada
     if (red < 100 && green < 100 && blue < 100) {
@@ -213,7 +227,6 @@ void loop() {
       digitalWrite(motorD2, LOW);
     }
   }
-  delay(100);
 }
 
 
@@ -249,6 +262,7 @@ int calDistanciaF() {
   digitalWrite(trigPin, LOW);
   durationF = pulseIn(echoPin, HIGH);  // Lê o echoPin, retorna o tempo de viagem da onda sonora em microssegundos
   distFrente = durationF * 0.034 / 2;
+  delay(30);
   return distFrente;
 }
 
@@ -262,5 +276,6 @@ int calDistanciaT() {
   digitalWrite(trigPin2, LOW);
   durationT = pulseIn(echoPin2, HIGH);  // Lê o echoPin, retorna o tempo de viagem da onda sonora em microssegundos
   distTras = durationT * 0.034 / 2;
+  delay(30);
   return distTras;
 }
