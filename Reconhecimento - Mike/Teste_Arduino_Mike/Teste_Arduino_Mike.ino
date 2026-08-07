@@ -1,3 +1,14 @@
+#include <Servo.h>
+//olho
+Servo horizontal; 
+Servo vertical;
+
+//braços
+Servo direito; //braço direito
+Servo esquerdo; //braço esquerdo
+
+bool bracosLevantados = false; 
+
 //=====================================================
 // VARIÁVEIS RECEBIDAS DO PYTHON
 //=====================================================
@@ -13,6 +24,8 @@ float erroX = 0;
 float erroDistancia = 0;
 
 float erroPerspectiva = 0;
+
+int PosicaoOlho = 0;
 
 
 //=====================================================
@@ -69,6 +82,22 @@ void setup() {
   pinMode(enbET, OUTPUT);
   pinMode(enbDT, OUTPUT);
   pinMode(13, OUTPUT);
+
+  horizontal.attach(10);
+  vertical.attach(9);
+
+}
+//braços:
+  void levantarBracos(){
+  
+  direito.attach(6); 
+  esquerdo.attach(7);
+  esquerdo.write(180);
+  direito.write(0);
+  delay(500);
+  direito.write(90);
+  esquerdo.write(120);
+  delay(500);
 }
 
 
@@ -102,7 +131,7 @@ void loop() {
                                          terceiraVirgula)
                         .toFloat();
 
-      erroPerspectiva = mensagem.substring(terceiraVirgula + 1).toFloat();
+      PosicaoOlho = mensagem.substring(terceiraVirgula + 1).toInt();
     }
 
     if (tagID == 0) {
@@ -138,6 +167,8 @@ void loop() {
       digitalWrite(motorDT1, HIGH);
       digitalWrite(motorDT2, LOW);
       analogWrite(enbDT, velDT);
+
+      movimentacaoolho();
     }
 
     if (tagID == 1) {
@@ -152,6 +183,8 @@ void loop() {
 
       digitalWrite(motorDT1, LOW);
       digitalWrite(motorDT2, LOW);
+
+      movimentacaoolho();
     }
 
     if (tagID == 2) {
@@ -160,7 +193,7 @@ void loop() {
         float velEF = 75 - Vy;
         float velDF = 75 - Vy;
         float velET = 75 + Vy;
-        float velDT = 75 +Vy;
+        float velDT = 75 + Vy;
 
         velEF = constrain(velEF, 0, 255);
         velDF = constrain(velDF, 0, 255);
@@ -182,7 +215,59 @@ void loop() {
         digitalWrite(motorDT1, HIGH);
         digitalWrite(motorDT2, LOW);
         analogWrite(enbDT, velDT);
+        movimentacaoolho();
       }
     }
   }
+
+  if (tagID == 3) {
+    movimentacaoolho();
+  }
+}
+
+
+void olho(int vertical2, int horizontal2) {
+  vertical.write(vertical2);
+  horizontal.write(horizontal2);
+}
+
+void movimentacaoolho() {
+  switch (PosicaoOlho) {
+    case 1:
+      olho(0, 90);
+      break;
+    case 2:
+      olho(45, 90);
+      break;
+    case 3:
+      olho(90, 90);
+      break;
+    case 4:
+      olho(0, 50);
+      break;
+    case 5:
+      olho(45, 50);
+      break;
+    case 6:
+      olho(90, 50);
+      break;
+    case 7:
+      olho(0, 30);
+      break;
+    case 8:
+      olho(45, 30);
+      break;
+    case 9:
+      olho(90, 30);
+      break;
+  }
+
+    if (tagID == 4) {
+
+      if(!bracosLevantados){
+         levantarBracos();
+         bracosLevantados = true;
+      }
+    
+
 }

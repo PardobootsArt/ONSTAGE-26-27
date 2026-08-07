@@ -1,3 +1,5 @@
+from typing import Literal
+
 import cv2
 import math
 import numpy as np
@@ -175,12 +177,117 @@ while True:
 
             print("-------------------------------------")
 
+                # Calcula a diagonal (Pitágoras)
+                tagLength = math.sqrt((tagWidth ** 2) + (tagHeight ** 2))
+     
+                # Desenha a linha lilás do centro da tag até o centro da tela
+                cv2.line(frame, (cx, cy), (centro_tela_x, centro_tela_y), (255, 130, 171), 2)
+                
+                # Desenha o círculo azul no centro da tela
+                cv2.circle(frame, (centro_tela_x, centro_tela_y), 6, (255, 144, 30), -1)
+
+                # ==========================================================
+                # CÁLCULO DOS ERROS
+
+                # Erro horizontal.
+                erro_x = cx - centro_tela_x
+
+                # Distância desejada.
+                DISTANCIA_DESEJADA = 180
+
+                # Erro de distância.
+                erro_distancia = DISTANCIA_DESEJADA - tagLength
+
+                razao = tagWidth / tagHeight
+                erro_Perspectiva = (1 - razao) * np.sign(erro_x)
+
+                Vx = 0.6 * erro_distancia
+                Wx = 0.5 * erro_x
+                Vy = 100 * erro_Perspectiva
+                    
+                print("TAG 2")
+                mensagem = f"{tag.tag_id},{erro_x},{erro_distancia:.2f},{erro_Perspectiva:.2f}\n"
+                arduino.write(mensagem.encode())
+
+                print("-------------------------------------")
+                print("Mensagem enviada ao Arduino:")
+
+                print(f"{erro_x:.2f}, {erro_distancia:.2f}, {erro_Perspectiva:.2f}, {Vx:.2f}, {Wx:.2f}, {Vy:.2f}")
+
+                print("-------------------------------------")
+
+            
         elif tag.tag_id == 1:
             tag_detectada = True
             
             print("TAG 3")
             mensagem = "1,0,0,0\n"
             arduino.write(mensagem.encode())
+    
+        elif tag.tag_id == 3:
+            tag_detectada = True
+
+            altura, largura, _ = frame.shape
+            posicaoX = largura // 3
+            posicaoY = altura // 3
+            cv2.line(frame, (int(posicaoX), 0), (int(posicaoX),altura), (255, 130, 171), 2)
+            cv2.line(frame, (int(posicaoX*2), 0), (int(posicaoX*2),altura), (255, 130, 171), 2)   
+            cv2.line(frame, (0, int(posicaoY)), (largura, int(posicaoY)), (255, 130, 171), 2)
+            cv2.line(frame, (0, int(posicaoY*2)), (largura, int(posicaoY*2)), (255, 130, 171), 2)
+
+            if 0 < cx < posicaoX:
+                print("coluna1")
+                if 0 < cy < posicaoY:
+                    print("linha1")
+                    posicao = 1
+                if posicaoY < cy < posicaoY*2:
+                    print("linha2")
+                    posicao = 2
+                if posicaoY*2 < cy < altura:
+                    print("linha3")
+                    posicao = 3
+            if posicaoX < cx < posicaoX*2:
+                print("coluna2")
+                if 0 < cy < posicaoY:
+                    print("linha1")
+                    posicao = 4
+                if posicaoY < cy < posicaoY*2:
+                    print("linha2")
+                    posicao = 5
+                if posicaoY*2 < cy < altura:
+                    print("linha3")
+                    posicao = 6
+
+            if posicaoX*2 < cx < largura:
+                print("coluna3")
+                if 0 < cy < posicaoY:
+                    print("linha1")
+                    posicao = 7
+                if posicaoY < cy < posicaoY*2:
+                    print("linha2")
+                    posicao = 8
+                if posicaoY*2 < cy < altura:
+                    print("linha3")
+                    posicao = 9
+            print(f"Posição: {posicao}")
+            mensagem = f"{tag.tag_id},0,0,{posicao}\n"
+            arduino.write(mensagem.encode())
+
+            print("TAG 3")
+            print("-------------------------------------")
+            print("Mensagem enviada ao Arduino:")
+            
+            print(mensagem.strip())
+            
+            print("-------------------------------------")
+
+        elif tag.tag_id == 4:
+             tag_detectada = True
+            
+             print("TAG 4")
+             mensagem = "4,0,0,0\n"
+             arduino.write(mensagem.encode())
+            
 
     if not tag_detectada:
         mensagem = "-1,0,0,0\n"
@@ -197,3 +304,10 @@ while True:
 # Limpa a memória ao fechar
 cap.release()
 cv2.destroyAllWindows()
+
+       
+
+     
+            
+
+     

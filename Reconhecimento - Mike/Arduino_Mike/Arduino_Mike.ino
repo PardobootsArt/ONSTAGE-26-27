@@ -17,8 +17,8 @@ float erroDistancia = 0;
 // GANHOS DO CONTROLADOR
 //=====================================================
 
-float KpX = 0.3;      // Controle lateral
-float KpDist = 0.25;  // Controle da distância
+float KpX = 0.15;      // Controle lateral
+float KpDist = 0.1;  // Controle da distância
 
 
 //=====================================================
@@ -53,7 +53,7 @@ bool girar180 = false;
 bool girar90D = false;
 bool girar90E = false;
 int estado;
-int toleranciaX = 20;
+int toleranciaX = 40;
 int toleranciaDist = 10;
 
 void setup() {
@@ -196,9 +196,7 @@ void loop() {
   if (Serial.available()) {
     // Lê uma linha inteira enviada pelo Python
     String mensagem = Serial.readStringUntil('\n');
-
     mensagem.trim();
-
     // Procura as vírgulas
     int primeiraVirgula = mensagem.indexOf(',');
 
@@ -248,25 +246,27 @@ void loop() {
     }
 
     if (tagID == 1) {
-      float Kpx = 0.3;
-      float Kpdist = 0.25;
+      float Kpx = 0.15;
+      float Kpdist = 0.1;
       if (abs(erroX) > toleranciaX) {
         Vx = 0;
         W = Kpx * abs(erroX);
         float velocid = 90 + W;
         velocid = constrain(velocid, 0, 255);
-        analogWrite(enbEF, velocid);
-        analogWrite(enbDF, velocid);
-        analogWrite(enbET, velocid);
-        analogWrite(enbDT, velocid);
+        analogWrite(enbEF, 85);
+        analogWrite(enbDF, 85);
+        analogWrite(enbET, 85);
+        analogWrite(enbDT, 85);
         if (erroX > 0) {
-          direcaoMotores(3);
-        }
-        if (erroX < 0) {
           direcaoMotores(4);
         }
+        if (erroX < 0) {
+          direcaoMotores(3);
+        }
+      } else if (abs(erroX) < toleranciaX){
+        direcaoMotores(-1);
       }
-      direcaoMotores(-1);
+      
     }
     //===============GIRAR 180 GRAUS ====================
     if (tagID == 2) {
