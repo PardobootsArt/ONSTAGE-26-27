@@ -7,6 +7,7 @@ const int out = 41;
 =======
 //giroscopio
 #include <Wire.h>
+<<<<<<< HEAD
 #include <SoftwareSerial.h>
 >>>>>>> c49b0716a391ee909287f4940042102daa6da7e5
 
@@ -14,6 +15,9 @@ const int out = 41;
 int Pin_RED = 7;
 int Pin_GREEN = 8;
 int Pin_BLUE = 9;
+=======
+const int MPU = 0x68;
+>>>>>>> f25a37cfc5bf7b8220b746669913ddd2fd8f8449
 
 //Variaveis cores
 int red = 0;
@@ -88,6 +92,7 @@ void setup() {
 int posicaoAtual = 25;
 bool sentidoHorario = true;
 int contagemObjeto;
+int repeticao;
 
 //===========CORREÇÃO===========
 float Kp = 1.2;
@@ -143,32 +148,31 @@ int lerDistancia() {
 bool varreduraCompleta = false;
 
 int procurarObjeto() {
-
   while (true) {
-    int posTronco=posicaoAtual*10;
-    girarTronco (90, posTronco);
     meuServo.write(posicaoAtual);
+    int oi = posicaoAtual * (-2);
+    girarTronco(110, oi);
     delay(15);
 
     int distancia = lerDistancia();
 
-    if (distancia > 0 && distancia < 30) {
+    if (distancia > 0 && distancia < 20) {
 
       delay(150);
       varreduraCompleta = false;
       return posicaoAtual;
     }
 
-    if (sentidoHorario) {
+    if (sentidoHorario == true) {
 
       posicaoAtual += 4;
 
-      if (posicaoAtual >= 155) {
+      if (posicaoAtual >= 145) {
         posicaoAtual = 155;
         sentidoHorario = false;
       }
 
-    } else {
+    } else if (sentidoHorario == false) {
 
       posicaoAtual -= 4;
 
@@ -247,24 +251,25 @@ float obterAngulo() {
 }
 
 // ==================MOTORES====================
-int motorDF1 = 26;
-int motorDF2 = 28;
-int motorEF1 = 22;
-int motorEF2 = 24;
-int motorDT1 = 34;
-int motorDT2 = 36;
-int motorET1 = 30;
-int motorET2 = 32;
+int motorEF1 = 26;
+int motorEF2 = 28;
+int motorET1 = 22;
+int motorET2 = 24;
+int motorDF1 = 34;
+int motorDF2 = 36;
+int motorDT1 = 30;
+int motorDT2 = 32;
 
-int enbEF = 13;
-int enbDF = 12;
-int enbET = 11;
-int enbDT = 10;
+int enbET = 13;
+int enbEF = 12;
+int enbDT = 11;
+int enbDF = 10;
 
 int servo = 38;
 //===============================================SETUP=========================================
 void setup() {
   //COMUNICAÇÃO
+<<<<<<< HEAD
 >>>>>>> c49b0716a391ee909287f4940042102daa6da7e5
   Serial.begin(9600);
   //Led e sensor de cor
@@ -279,6 +284,10 @@ void setup() {
   Serial.begin(9600);
   digitalWrite(s0, HIGH);
   digitalWrite(s1, LOW);
+=======
+  Serial.begin(115200);
+  Serial2.begin(115200);
+>>>>>>> f25a37cfc5bf7b8220b746669913ddd2fd8f8449
 
 <<<<<<< HEAD
   digitalWrite (motorE1, HIGH);
@@ -493,7 +502,7 @@ int calDistanciaF() {
   pinMode(ECHO, INPUT);
 
   meuServo.attach(servo);
-  meuServo.write(25);
+  meuServo.write(90);
   delay(300);
 
   //==============MOTORES=================
@@ -514,6 +523,7 @@ int calDistanciaF() {
   pinMode(20, INPUT);
   pinMode(21, INPUT);
   contagemObjeto = 0;
+  repeticao = 0;
   //frente (80, 1000);
   analogWrite(enbtronco, 175);
   delay(150);
@@ -548,7 +558,7 @@ void pararMotores() {
   digitalWrite(motorDT1, LOW);
   digitalWrite(motorDT2, LOW);
 }
-
+//ok
 void esquerda(int velo, int tempoMs) {
   anguloReferencia = obterAngulo();
   ultimoErro = 0;
@@ -556,27 +566,26 @@ void esquerda(int velo, int tempoMs) {
   unsigned long inicio = millis();
   while (millis() - inicio < tempoMs) {
     float c = correcao();
-    ;
     float velDir = velo + c;
     float velEsq = velo - c;
     velEsq = constrain(velEsq, 0, 255);
     velDir = constrain(velDir, 0, 255);
-    digitalWrite(motorEF1, LOW);
-    digitalWrite(motorEF2, HIGH);
-    digitalWrite(motorDF1, LOW);
-    digitalWrite(motorDF2, HIGH);
+    analogWrite(enbEF, velEsq);
+    analogWrite(enbDF, velEsq);
+    analogWrite(enbET, velDir);
+    analogWrite(enbDT, velDir);
+    digitalWrite(motorEF1, HIGH);
+    digitalWrite(motorEF2, LOW);
+    digitalWrite(motorDF1, HIGH);
+    digitalWrite(motorDF2, LOW);
     digitalWrite(motorET1, LOW);
     digitalWrite(motorET2, HIGH);
     digitalWrite(motorDT1, LOW);
     digitalWrite(motorDT2, HIGH);
-    analogWrite(enbEF, velEsq);
-    analogWrite(enbDF, velDir);
-    analogWrite(enbET, velEsq);
-    analogWrite(enbDT, velDir);
   }
   pararMotores();
 }
-
+//ok
 void direita(int velo, int tempoMs) {
   anguloReferencia = obterAngulo();
   ultimoErro = 0;
@@ -589,22 +598,22 @@ void direita(int velo, int tempoMs) {
     float velEsq = velo + c;
     velEsq = constrain(velEsq, 0, 255);
     velDir = constrain(velDir, 0, 255);
-    digitalWrite(motorEF1, HIGH);
-    digitalWrite(motorEF2, LOW);
-    digitalWrite(motorDF1, HIGH);
-    digitalWrite(motorDF2, LOW);
+    analogWrite(enbEF, velEsq);
+    analogWrite(enbDF, velEsq);
+    analogWrite(enbET, velDir);
+    analogWrite(enbDT, velDir);
+    digitalWrite(motorEF1, LOW);
+    digitalWrite(motorEF2, HIGH);
+    digitalWrite(motorDF1, LOW);
+    digitalWrite(motorDF2, HIGH);
     digitalWrite(motorET1, HIGH);
     digitalWrite(motorET2, LOW);
     digitalWrite(motorDT1, HIGH);
     digitalWrite(motorDT2, LOW);
-    analogWrite(enbEF, velEsq);
-    analogWrite(enbDF, velDir);
-    analogWrite(enbET, velEsq);
-    analogWrite(enbDT, velDir);
   }
   pararMotores();
 }
-
+//ok
 void frente(int velo, int tempoMs) {
   anguloReferencia = obterAngulo();
   ultimoErro = 0;
@@ -617,23 +626,22 @@ void frente(int velo, int tempoMs) {
     float velEsq = velo + c;
     velEsq = constrain(velEsq, 0, 255);
     velDir = constrain(velDir, 0, 255);
-    digitalWrite(motorEF1, HIGH);
-    digitalWrite(motorEF2, LOW);
-    digitalWrite(motorDF1, LOW);
-    digitalWrite(motorDF2, HIGH);
+    analogWrite(enbEF, velEsq);
+    analogWrite(enbDF, velDir);
+    analogWrite(enbET, velEsq);
+    analogWrite(enbDT, velDir);
+    digitalWrite(motorEF1, LOW);
+    digitalWrite(motorEF2, HIGH);
+    digitalWrite(motorDF1, HIGH);
+    digitalWrite(motorDF2, LOW);
     digitalWrite(motorET1, LOW);
     digitalWrite(motorET2, HIGH);
     digitalWrite(motorDT1, HIGH);
     digitalWrite(motorDT2, LOW);
-    analogWrite(enbEF, velEsq);
-    analogWrite(enbDF, velEsq);
-    analogWrite(enbET, velDir);
-    analogWrite(enbDT, velDir);
   }
   pararMotores();
 }
-
-
+//ok
 void tras(int velo, int tempoMs) {
   anguloReferencia = obterAngulo();
   ultimoErro = 0;
@@ -646,18 +654,18 @@ void tras(int velo, int tempoMs) {
     float velEsq = velo - c;
     velEsq = constrain(velEsq, 0, 255);
     velDir = constrain(velDir, 0, 255);
-    digitalWrite(motorEF2, HIGH);
-    digitalWrite(motorEF1, LOW);
-    digitalWrite(motorDF2, LOW);
-    digitalWrite(motorDF1, HIGH);
+    analogWrite(enbEF, velEsq);
+    analogWrite(enbDF, velDir);
+    analogWrite(enbET, velEsq);
+    analogWrite(enbDT, velDir);
+    digitalWrite(motorEF2, LOW);
+    digitalWrite(motorEF1, HIGH);
+    digitalWrite(motorDF2, HIGH);
+    digitalWrite(motorDF1, LOW);
     digitalWrite(motorET2, LOW);
     digitalWrite(motorET1, HIGH);
     digitalWrite(motorDT2, HIGH);
     digitalWrite(motorDT1, LOW);
-    analogWrite(enbEF, velEsq);
-    analogWrite(enbDF, velEsq);
-    analogWrite(enbET, velDir);
-    analogWrite(enbDT, velDir);
   }
 
   pararMotores();
@@ -687,9 +695,23 @@ bool frenteLivre() {
 }
 
 void loop() {
+<<<<<<< HEAD
   procurarObjeto();
   Serial.print("graus: ");
   Serial.println(degrees);
   delay(500);
 }
 >>>>>>> c49b0716a391ee909287f4940042102daa6da7e5
+=======
+  if (Serial2.available()) {
+    int recieve = Serial2.parseInt();
+    if (recieve == 3) {
+      delay(3000);
+      direita(100, 2500);
+      delay(500);
+      esquerda(100, 1000);
+      delay(10000);
+    }
+  }
+}
+>>>>>>> f25a37cfc5bf7b8220b746669913ddd2fd8f8449
