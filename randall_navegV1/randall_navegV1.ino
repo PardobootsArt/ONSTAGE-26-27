@@ -136,7 +136,7 @@ void loop() {
     Serial.print(" verde ");
     Serial.println(green);
     if (green > 155 && green < 200 && red > 280 && green < blue) {
-      Serial.println("vi verdeeeeeeeeee");
+      Serial.println("vi verdeeee");
       camuflagemRandall = true;
       AcenderLed(0, 255, 0);
       delay(150);
