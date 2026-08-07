@@ -9,12 +9,16 @@ void setup() {
 direito.attach(11); //porta 12
 esquerdo.attach(13); //porta 13
 
-esquerdo.write(180);
+esquerdo.write(180); 
 direito.write(0);
+delay(500);
+direito.write(90); 
+esquerdo.write(120);
 delay(500);
 direito.write(90);
 esquerdo.write(120);
 delay(500);
+
 
 
 
