@@ -1,3 +1,5 @@
+#include <Servo.h>
+
 //=====================================================
 // VARIÁVEIS RECEBIDAS DO PYTHON
 //=====================================================
@@ -49,6 +51,10 @@ int enbDF = 10;
 int enbET = 13;
 int enbDT = 12;
 
+//servos
+ Servo horizontal;
+ Servo vertical;
+
 void setup() {
   Serial.begin(9600);
 
@@ -66,10 +72,20 @@ void setup() {
   pinMode(enbET, OUTPUT);
   pinMode(enbDT, OUTPUT);
   pinMode(13, OUTPUT);
+
+  horizontal.attach(10); //porta 10
+  vertical.attach(9); //porta 9
+
+  vertical.write(45);
+  horizontal.write(0);
+  delay(500);
+  horizontal.write(90);
+  delay(2000);
 }
 
 
 void loop() {
+  
   // erroDistancia já veio do Python
   if (Serial.available()) {
     // Lê uma linha inteira enviada pelo Python
