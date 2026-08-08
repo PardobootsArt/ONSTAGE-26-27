@@ -437,8 +437,51 @@ void loop() {
       delay(3000);
       direita(100, 2500);
       delay(500);
-      esquerda(100, 1000);
-      delay(10000);
+      if (repeticao == 0) {
+        while (contagemObjeto <= 3) {
+          int grauss = procurarObjeto();
+          int time = calcularTempo(grauss);
+          if (grauss != -1) {
+            if (grauss < 90) {
+              //objeto na esquerda, ir para direita
+              int tempo = time * 85;
+              contagemObjeto++;
+
+              direita(70, tempo);
+              delay(200);
+              if (frenteLivre() == true) {
+                frente(80, 1850);
+              } else {
+                direita(70, 1500);
+                delay(200);
+                frente(80, 1850);
+              }
+            }
+
+            if (grauss > 90) {
+              //objeto na direita, ir para esquerda
+              int tempo = time * 85;
+              contagemObjeto++;
+              esquerda(70, tempo);
+              delay(200);
+              if (frenteLivre() == true) {
+                frente(80, 1850);
+              } else {
+                esquerda(70, 1500);
+                delay(200);
+                frente(80, 1850);
+              }
+            }
+          } else if (varreduraCompleta) {
+            frente(80, 200);
+            varreduraCompleta = false;
+          }
+        }
+        delay(2000);
+        if (contagemObjeto == 3) {
+          repeticao++;
+        }
+      }
     }
   }
 }

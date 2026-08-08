@@ -35,11 +35,18 @@ int distFrente;
 long durationT;
 int distTras;
 
-float Kp = 30.0;
-float Kd = 15.0;
+int ultimoErro;
+int Kp = 50;
+int Kd = 45;
 
-int velocidadeBase = 55;
-int distBase = 7;
+int velocidadeBase = 60;
+
+int corAtual = 0;
+int ultimaCor = 0;
+int quantidadeCores = 0;
+
+bool encontrouTresCores = false;
+
 
 void setup() {
   // put your setup code here, to run once:
@@ -69,8 +76,8 @@ void setup() {
   digitalWrite(s0, HIGH);
   digitalWrite(s1, LOW);
   AcenderLed(175, 0, 255);
-  
-  while (Serial2.available() == false){
+
+  /*while (Serial2.available() == false){
   }
   Serial.println("comunicação serialOK");
   int recieve = Serial2.parseInt();
@@ -82,9 +89,7 @@ void setup() {
   analogWrite(enbD, 55);
   direcaoMotores(1);
   delay(6000);
-  direcaoMotores(-1);
-  
-
+  direcaoMotores(-1);*/
 }
 void direcaoMotores(int direcao) {
   if (direcao == -1) {
@@ -109,18 +114,22 @@ void direcaoMotores(int direcao) {
 
 //=========================VOID LOOP===================
 void loop() {
-  direcaoMotores(1);
+  if (encontrouTresCores) {
+    analogWrite(enbE, 0);
+    analogWrite(enbD, 0);
+    return;
+  }
+
   if (camuflagemRandall == false) {
+    direcaoMotores(1);
     color();
     //===============CERTO CORRECAO (NAO MEXER)=========
     distFrente = calDistanciaF();
     distTras = calDistanciaT();
-    int ultimoErro;
     int erro = (distFrente - distTras);
     int correcaoP = Kp * erro;
     int correcaoD = Kd * (ultimoErro - erro);
     int correcaoFinal = correcaoP + correcaoD;
-
     int velEsq = velocidadeBase + correcaoFinal;
     int velDir = velocidadeBase - correcaoFinal;
     velEsq = constrain(velEsq, 0, 255);
@@ -135,28 +144,34 @@ void loop() {
     Serial.print(red);
     Serial.print(" verde ");
     Serial.println(green);
-    if (green > 155 && green < 200 && red > 280 && green < blue) {
-      Serial.println("vi verdeeee");
+    if (green > 500 && red > 500 && blue > 400) {
+      Serial.println("PRETO DETECTADO");
       camuflagemRandall = true;
-      AcenderLed(0, 255, 0);
-      delay(150);
       AcenderLed(175, 0, 255);
+      analogWrite(enbE, 65);
+      analogWrite(enbD, 65);
+      direcaoMotores(1);
+      delay(1850);
       direcaoMotores(-1);
       delay(1000);
-      analogWrite(enbE, 120);
-      analogWrite(enbD, 120);
-      direcaoMotores(2);
-      delay(1800);
+      analogWrite(enbE, 80);
+      analogWrite(enbD, 240);
+      digitalWrite(motorE1, HIGH);
+      digitalWrite(motorE2, LOW);
+      digitalWrite(motorD1, LOW);
+      digitalWrite(motorD2, HIGH);
+      delay(950);
       direcaoMotores(-1);
+      delay(500);
     }
   }
-  direcaoMotores(1);
+
   if (camuflagemRandall == true) {
     //motores
     color();
+    direcaoMotores(1);
     distFrente = calDistanciaF();
     distTras = calDistanciaT();
-    int ultimoErro;
     int erro = (distFrente - distTras);
     int correcaoP = Kp * erro;
     int correcaoD = Kd * (ultimoErro - erro);
@@ -177,58 +192,65 @@ void loop() {
     Serial.print(" verde ");
     Serial.println(green);
 
-    //Verifica se a cor branca foi detectada
-    if (red < 100 && green < 100 && blue < 100) {
+    Serial.print("Quantidade de Cores: ");
+    Serial.println(quantidadeCores);
+
+    if (red < 90 && green < 90 && blue < 90) {
+
+      corAtual = 1;  // BRANCO
+
       Serial.println("BRANCO");
-      AcenderLed(175, 0, 255);
-    }
-    //Verifica se a cor amarela foi detectada
-    else if (red < 80 && green < 100 && green < blue) {
-      Serial.println("AMARELO");
-      AcenderLed(255, 110, 0);
-      digitalWrite(motorE1, LOW);
-      digitalWrite(motorE2, LOW);
-      digitalWrite(motorD1, LOW);
-      digitalWrite(motorD2, LOW);
-      delay(2000);
-      digitalWrite(motorE1, HIGH);
-      digitalWrite(motorE2, LOW);
-      digitalWrite(motorD1, HIGH);
-      digitalWrite(motorD2, LOW);
-    }
-    //Verifica se a cor vermelha foi detectada
-    else if (red < blue && blue < green && red < 200) {
-      Serial.println("VERMELHO");
-      AcenderLed(255, 105, 180);
-      ;
-      digitalWrite(motorE1, LOW);
-      digitalWrite(motorE2, LOW);
-      digitalWrite(motorD1, LOW);
-      digitalWrite(motorD2, LOW);
-      delay(2000);
-      digitalWrite(motorE1, HIGH);
-      digitalWrite(motorE2, LOW);
-      digitalWrite(motorD1, HIGH);
-      digitalWrite(motorD2, LOW);
+      AcenderLed(150, 0, 255);
     }
 
-    //Verifica se a cor azul foi detectada
-    else if (blue < red && blue < green && blue < 1000) {
+    else if (red < 90 && green < 100 && blue > 130) {
+
+      corAtual = 2;  // AMARELO
+
+      Serial.println("AMARELO");
+      AcenderLed(255, 130, 0);
+    }
+
+    else if (red < 100 && blue < 100 && green > 100) {
+
+      corAtual = 3;  // ROSA
+
+      Serial.println("ROSA");
+      AcenderLed(255, 0, 175);
+    }
+
+    else if (blue < 130 && red > 250 && blue < green) {
+
+      corAtual = 4;  // AZUL
+
       Serial.println("AZUL");
-      AcenderLed(0, 0, 255);
-      digitalWrite(motorE1, LOW);
-      digitalWrite(motorE2, LOW);
-      digitalWrite(motorD1, LOW);
-      digitalWrite(motorD2, LOW);
-      delay(2000);
-      digitalWrite(motorE1, HIGH);
-      digitalWrite(motorE2, LOW);
-      digitalWrite(motorD1, HIGH);
-      digitalWrite(motorD2, LOW);
+      AcenderLed(64, 224, 208);
+    }
+
+    else {
+      corAtual = 0;
+    }
+
+    if (corAtual != 0 && corAtual != 1 && corAtual != ultimaCor) {
+
+      quantidadeCores++;
+
+      ultimaCor = corAtual;
+    }
+
+    if (quantidadeCores >= 3) {
+
+      encontrouTresCores = true;
+      analogWrite(enbE, 65);
+      analogWrite(enbD, 65);
+      delay(1000);
+      analogWrite(enbE, 0);
+      analogWrite(enbD, 0);
+
+      Serial.println("3 CORES DETECTADAS - PARANDO!");
     }
   }
 }
-
 
 void color() {
   //Rotina que le o valor das cores
