@@ -217,13 +217,78 @@ void loop() {
         analogWrite(enbDT, velDT);
         movimentacaoolho();
       }
-    }
+  
+  
+   void girar(int lado, unsigned long tempo){
+
+  // lado = 1  -> gira para a direita
+  // lado = -1 -> gira para a esquerda
+
+  if (lado == 1)
+  {
+    // ==============================
+    // GIRAR PARA A DIREITA
+    // ==============================
+
+    // Lado esquerdo para frente
+    digitalWrite(motorEF1, LOW);
+    digitalWrite(motorEF2, HIGH);
+
+    digitalWrite(motorET1, HIGH);
+    digitalWrite(motorET2, LOW);
+
+    // Lado direito para trás
+    digitalWrite(motorDF1, LOW);
+    digitalWrite(motorDF2, HIGH);
+
+    digitalWrite(motorDT1, LOW);
+    digitalWrite(motorDT2, HIGH);
+  }
+  else if (lado == -1)
+  {
+    // ==============================
+    // GIRAR PARA A ESQUERDA
+    // ==============================
+
+    // Lado esquerdo para trás
+    digitalWrite(motorEF1, HIGH);
+    digitalWrite(motorEF2, LOW);
+
+    digitalWrite(motorET1, LOW);
+    digitalWrite(motorET2, HIGH);
+
+    // Lado direito para frente
+    digitalWrite(motorDF1, HIGH);
+    digitalWrite(motorDF2, LOW);
+
+    digitalWrite(motorDT1, HIGH);
+    digitalWrite(motorDT2, LOW);
+  }
+
+  // Liga todos os motores na velocidade desejada
+  analogWrite(enbEF, 100);
+  analogWrite(enbDF, 100);
+  analogWrite(enbET, 100);
+  analogWrite(enbDT, 100);
+
+  // Mantém o robô girando pelo tempo determinado
+  delay(tempo);
+
+  // ==============================
+  // PARA TODOS OS MOTORES
+  // ==============================
+
+  analogWrite(enbEF, 0);
+  analogWrite(enbDF, 0);
+  analogWrite(enbET, 0);
+  analogWrite(enbDT, 0);
+}
   }
 
   if (tagID == 3) {
     movimentacaoolho();
   }
-}
+  }
 
 
 void olho(int vertical2, int horizontal2) {
@@ -267,6 +332,12 @@ void movimentacaoolho() {
       if(!bracosLevantados){
          levantarBracos();
          bracosLevantados = true;
+
+         direito.write(0);
+         esquerdo.write(180);
+         delay(500);
+         direito.write(180);
+         esquerdo.write(0);
       }
     
 
