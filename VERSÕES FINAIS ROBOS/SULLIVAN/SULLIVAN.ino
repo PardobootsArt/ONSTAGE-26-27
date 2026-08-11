@@ -11,8 +11,8 @@ float offsetGz = 0;
 #define bracoE2 47
 #define bracoD1 51
 #define bracoD2 53
-#define enbracoD 4
-#define enbracoE 5
+#define enbracoD 7
+#define enbracoE 8
 #define tronco1 45
 #define tronco2 43
 #define enbtronco 6
@@ -89,8 +89,6 @@ bool varreduraCompleta = false;
 int procurarObjeto() {
   while (true) {
     meuServo.write(posicaoAtual);
-    int oi = posicaoAtual * (-2);
-    girarTronco(110, oi);
     delay(15);
 
     int distancia = lerDistancia();
@@ -411,7 +409,7 @@ int calcularTempo(int angulo) {
 
   int erro = abs(angulo - 90);
   float fator = cos(radians(erro));
-  int tempo = 15 * cos(radians(abs(angulo - 90)));
+  int tempo = 50 * fator;
   tempo = constrain(tempo, 5, 20);
   return tempo;
 }
@@ -431,57 +429,43 @@ bool frenteLivre() {
 }
 
 void loop() {
-  if (Serial2.available()) {
-    int recieve = Serial2.parseInt();
-    if (recieve == 3) {
-      delay(3000);
-      direita(100, 2500);
-      delay(500);
-      if (repeticao == 0) {
-        while (contagemObjeto <= 3) {
-          int grauss = procurarObjeto();
-          int time = calcularTempo(grauss);
-          if (grauss != -1) {
-            if (grauss < 90) {
-              //objeto na esquerda, ir para direita
-              int tempo = time * 85;
-              contagemObjeto++;
+  delay(3000);
+  direita(255, 8750);
+  delay(1250);
+  while (contagemObjeto < 2) {
+    int grauss = procurarObjeto();
+    int time = calcularTempo(grauss);
+    if (grauss != -1) {
+      if (grauss > 90) {
+        //objeto na esquerda, ir para direita
+        int tempo = time * 100;
+        contagemObjeto++;
 
-              direita(70, tempo);
-              delay(200);
-              if (frenteLivre() == true) {
-                frente(80, 1850);
-              } else {
-                direita(70, 1500);
-                delay(200);
-                frente(80, 1850);
-              }
-            }
-
-            if (grauss > 90) {
-              //objeto na direita, ir para esquerda
-              int tempo = time * 85;
-              contagemObjeto++;
-              esquerda(70, tempo);
-              delay(200);
-              if (frenteLivre() == true) {
-                frente(80, 1850);
-              } else {
-                esquerda(70, 1500);
-                delay(200);
-                frente(80, 1850);
-              }
-            }
-          } else if (varreduraCompleta) {
-            frente(80, 200);
-            varreduraCompleta = false;
-          }
-        }
-        delay(2000);
-        if (contagemObjeto == 3) {
-          repeticao++;
+        direita(165, tempo);
+        delay(200);
+        if (frenteLivre() == true) {
+          frente(255, 5250);
         }
       }
+
+      if (grauss < 90) {
+        //objeto na direita, ir para esquerda
+        int tempo = time * 100;
+        contagemObjeto++;
+        esquerda(165, tempo);
+        delay(200);
+        if (frenteLivre() == true) {
+          frente(255, 5250);
+        }
+      }
+    } else if (varreduraCompleta) {
+      frente(110, 200);
+      varreduraCompleta = false;
     }
   }
+  delay(2000);
+  if (contagemObjeto == 3) {
+    repeticao++;
+  }
 }
+
