@@ -59,7 +59,7 @@ else:
     print(f"Arduino conectado em {porta_manual}")
 # 2. INICIALIZA A WEBCAM
 # O argumento '0' geralmente é a webcam integrada do notebook
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)
 
 print("=== Sistema de Webcam Iniciado! Mostre a Tag ID 0 ===")
 
@@ -176,46 +176,6 @@ while True:
             print(f"{erro_x:.2f}, {erro_distancia:.2f}, {erro_Perspectiva:.2f}, {Vx:.2f}, {Wx:.2f}, {Vy:.2f}")
 
             print("-------------------------------------")
-
-                # Calcula a diagonal (Pitágoras)
-                tagLength = math.sqrt((tagWidth ** 2) + (tagHeight ** 2))
-     
-                # Desenha a linha lilás do centro da tag até o centro da tela
-                cv2.line(frame, (cx, cy), (centro_tela_x, centro_tela_y), (255, 130, 171), 2)
-                
-                # Desenha o círculo azul no centro da tela
-                cv2.circle(frame, (centro_tela_x, centro_tela_y), 6, (255, 144, 30), -1)
-
-                # ==========================================================
-                # CÁLCULO DOS ERROS
-
-                # Erro horizontal.
-                erro_x = cx - centro_tela_x
-
-                # Distância desejada.
-                DISTANCIA_DESEJADA = 180
-
-                # Erro de distância.
-                erro_distancia = DISTANCIA_DESEJADA - tagLength
-
-                razao = tagWidth / tagHeight
-                erro_Perspectiva = (1 - razao) * np.sign(erro_x)
-
-                Vx = 0.6 * erro_distancia
-                Wx = 0.5 * erro_x
-                Vy = 100 * erro_Perspectiva
-                    
-                print("TAG 2")
-                mensagem = f"{tag.tag_id},{erro_x},{erro_distancia:.2f},{erro_Perspectiva:.2f}\n"
-                arduino.write(mensagem.encode())
-
-                print("-------------------------------------")
-                print("Mensagem enviada ao Arduino:")
-
-                print(f"{erro_x:.2f}, {erro_distancia:.2f}, {erro_Perspectiva:.2f}, {Vx:.2f}, {Wx:.2f}, {Vy:.2f}")
-
-                print("-------------------------------------")
-
             
         elif tag.tag_id == 1:
             tag_detectada = True
@@ -304,6 +264,7 @@ while True:
 # Limpa a memória ao fechar
 cap.release()
 cv2.destroyAllWindows()
+
 
        
 
