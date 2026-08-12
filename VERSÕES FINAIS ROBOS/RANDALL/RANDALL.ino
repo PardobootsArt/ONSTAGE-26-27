@@ -36,14 +36,17 @@ long durationT;
 int distTras;
 
 int ultimoErro;
-int Kp = 50;
-int Kd = 45;
+int Kp = 25;
+int Kd = 30;
 
-int velocidadeBase = 60;
+int velocidadeBase = 80;
 
 int corAtual = 0;
 int ultimaCor = 0;
 int quantidadeCores = 0;
+
+int corEmConfirmacao = 0;
+int contadorLeituras = 0;
 
 bool encontrouTresCores = false;
 
@@ -76,8 +79,8 @@ void setup() {
   digitalWrite(s0, HIGH);
   digitalWrite(s1, LOW);
   AcenderLed(175, 0, 255);
-
-  /*while (Serial2.available() == false){
+  /*
+  while (Serial2.available() == false){
   }
   Serial.println("comunicação serialOK");
   int recieve = Serial2.parseInt();
@@ -85,11 +88,13 @@ void setup() {
   while(recieve != 3){
   }
   delay(5000);
-  analogWrite(enbE, 55);
-  analogWrite(enbD, 55);
+  analogWrite(enbE, 85);
+  analogWrite(enbD, 85);
   direcaoMotores(1);
-  delay(6000);
-  direcaoMotores(-1);*/
+  delay(7000);
+  direcaoMotores(-1);
+  */
+  
 }
 void direcaoMotores(int direcao) {
   if (direcao == -1) {
@@ -137,6 +142,7 @@ void loop() {
     analogWrite(enbE, velEsq);
     analogWrite(enbD, velDir);
     ultimoErro = erro;
+    
 
     Serial.print("Azul ");
     Serial.print(blue);
@@ -144,6 +150,10 @@ void loop() {
     Serial.print(red);
     Serial.print(" verde ");
     Serial.println(green);
+    Serial.print("Ultra Frente: ");
+    Serial.print(distFrente);
+    Serial.print("Ultra Tras: ");
+    Serial.println(distTras);
     if (green > 500 && red > 500 && blue > 400) {
       Serial.println("PRETO DETECTADO");
       camuflagemRandall = true;
@@ -151,16 +161,16 @@ void loop() {
       analogWrite(enbE, 65);
       analogWrite(enbD, 65);
       direcaoMotores(1);
-      delay(1850);
+      delay(1800);
       direcaoMotores(-1);
       delay(1000);
-      analogWrite(enbE, 80);
-      analogWrite(enbD, 240);
+      analogWrite(enbE, 165);
+      analogWrite(enbD, 210);
       digitalWrite(motorE1, HIGH);
       digitalWrite(motorE2, LOW);
       digitalWrite(motorD1, LOW);
       digitalWrite(motorD2, HIGH);
-      delay(950);
+      delay(800);
       direcaoMotores(-1);
       delay(500);
     }
@@ -170,7 +180,7 @@ void loop() {
     //motores
     color();
     direcaoMotores(1);
-    distFrente = calDistanciaF();
+    distFrente = calDistanciaF() + 2;
     distTras = calDistanciaT();
     int erro = (distFrente - distTras);
     int correcaoP = Kp * erro;
@@ -195,6 +205,11 @@ void loop() {
     Serial.print("Quantidade de Cores: ");
     Serial.println(quantidadeCores);
 
+    Serial.print("Ultra Frente: ");
+    Serial.print(distFrente);
+    Serial.print(" Ultra Tras: ");
+    Serial.println(distTras);
+
     if (red < 90 && green < 90 && blue < 90) {
 
       corAtual = 1;  // BRANCO
@@ -203,7 +218,7 @@ void loop() {
       AcenderLed(150, 0, 255);
     }
 
-    else if (red < 90 && green < 100 && blue > 130) {
+    else if (red < 90 && green < 100 && blue > 100) {
 
       corAtual = 2;  // AMARELO
 
@@ -211,7 +226,7 @@ void loop() {
       AcenderLed(255, 130, 0);
     }
 
-    else if (red < 100 && blue < 100 && green > 100) {
+    else if (red < 120 && blue < 120 && green > 100) {
 
       corAtual = 3;  // ROSA
 
@@ -219,7 +234,7 @@ void loop() {
       AcenderLed(255, 0, 175);
     }
 
-    else if (blue < 130 && red > 250 && blue < green) {
+    else if (blue < 130 && red > 140 && green < 170) {
 
       corAtual = 4;  // AZUL
 
@@ -231,11 +246,37 @@ void loop() {
       corAtual = 0;
     }
 
-    if (corAtual != 0 && corAtual != 1 && corAtual != ultimaCor) {
+    if (corAtual != 0 && corAtual != 1) {
 
-      quantidadeCores++;
+      // É uma cor diferente da que estamos confirmando?
+      if (corAtual != corEmConfirmacao) {
 
-      ultimaCor = corAtual;
+        // Começou a aparecer uma nova cor
+        corEmConfirmacao = corAtual;
+        contadorLeituras = 1;
+
+      } else {
+        // A mesma cor apareceu novamente
+        contadorLeituras++;
+      }
+
+      // A nova cor apareceu 3 vezes seguidas
+      if (contadorLeituras >= 5) {
+
+        // Só conta se for diferente da última fileira registrada
+        if (corEmConfirmacao != ultimaCor) {
+
+          quantidadeCores++;
+
+          ultimaCor = corEmConfirmacao;
+
+          Serial.print("NOVA FILEIRA CONFIRMADA! Quantidade: ");
+          Serial.println(quantidadeCores);
+        }
+
+        // Reseta a confirmação
+        contadorLeituras = 0;
+      }
     }
 
     if (quantidadeCores >= 3) {
@@ -251,7 +292,6 @@ void loop() {
     }
   }
 }
-
 void color() {
   //Rotina que le o valor das cores
   digitalWrite(s2, LOW);
