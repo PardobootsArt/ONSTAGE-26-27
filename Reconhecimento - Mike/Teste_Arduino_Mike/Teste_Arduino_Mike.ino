@@ -1,13 +1,18 @@
 #include <Servo.h>
 //olho
-Servo horizontal; 
+Servo horizontal;
 Servo vertical;
 
 //braços
-Servo direito; //braço direito
-Servo esquerdo; //braço esquerdo
+Servo direito;   //braço direito
+Servo esquerdo;  //braço esquerdo
+bool bracosLevantados = false;
 
-bool bracosLevantados = false; 
+// protótipos das funções
+void movimentacaoolho();
+void olho(int vertical2, int horizontal2);
+void levantarBracos();
+void girar(int lado, unsigned long tempo);
 
 //=====================================================
 // VARIÁVEIS RECEBIDAS DO PYTHON
@@ -83,15 +88,14 @@ void setup() {
   pinMode(enbDT, OUTPUT);
   pinMode(13, OUTPUT);
 
-  horizontal.attach(10);
-  vertical.attach(9);
-
+  horizontal.attach(3);
+  vertical.attach(2);
 }
 //braços:
-  void levantarBracos(){
-  
-  direito.attach(6); 
-  esquerdo.attach(7);
+void levantarBracos() {
+
+  direito.attach(4);
+  esquerdo.attach(5);
   esquerdo.write(180);
   direito.write(0);
   delay(500);
@@ -99,7 +103,67 @@ void setup() {
   esquerdo.write(120);
   delay(500);
 }
+void girar(int lado, unsigned long tempo) {
+  // lado = 1  -> gira para a direita
+  // lado = -1 -> gira para a esquerda
 
+  if (lado == 1) {
+    // ==============================
+    // GIRAR PARA A DIREITA
+    // ==============================
+
+    // Lado esquerdo para frente
+    digitalWrite(motorEF1, LOW);
+    digitalWrite(motorEF2, HIGH);
+
+    digitalWrite(motorET1, HIGH);
+    digitalWrite(motorET2, LOW);
+
+    // Lado direito para trás
+    digitalWrite(motorDF1, LOW);
+    digitalWrite(motorDF2, HIGH);
+
+    digitalWrite(motorDT1, LOW);
+    digitalWrite(motorDT2, HIGH);
+  }
+
+  else if (lado == -1) {
+    // ==============================
+    // GIRAR PARA A ESQUERDA
+    // ==============================
+
+    // Lado esquerdo para trás
+    digitalWrite(motorEF1, HIGH);
+    digitalWrite(motorEF2, LOW);
+
+    digitalWrite(motorET1, LOW);
+    digitalWrite(motorET2, HIGH);
+
+    // Lado direito para frente
+    digitalWrite(motorDF1, HIGH);
+    digitalWrite(motorDF2, LOW);
+
+    digitalWrite(motorDT1, HIGH);
+    digitalWrite(motorDT2, LOW);
+  }
+  // Liga todos os motores na velocidade desejada
+  analogWrite(enbEF, 100);
+  analogWrite(enbDF, 100);
+  analogWrite(enbET, 100);
+  analogWrite(enbDT, 100);
+
+  // Mantém o robô girando pelo tempo determinado
+  delay(tempo);
+
+  // ==============================
+  // PARA TODOS OS MOTORES
+  // ==============================
+
+  analogWrite(enbEF, 0);
+  analogWrite(enbDF, 0);
+  analogWrite(enbET, 0);
+  analogWrite(enbDT, 0);
+}
 
 void loop() {
 
@@ -142,33 +206,31 @@ void loop() {
       Vx = velocidadeBase + (KpDist * erroDistancia);
       W = KpX * erroX;
       // Limita o PWM
-      float velEF = Vx - W;
-      float velDF = Vx + W;
-      float velET = Vx + W;
-      float velDT = Vx - W;
+      float velEF = Vx + W;
+      float velDF = Vx - W;
+      float velET = Vx - W;
+      float velDT = Vx + W;
 
       velEF = constrain(velEF, 0, 255);
       velDF = constrain(velDF, 0, 255);
       velET = constrain(velET, 0, 255);
       velDT = constrain(velDT, 0, 255);
-
-      digitalWrite(motorEF1, LOW);
-      digitalWrite(motorEF2, HIGH);
       analogWrite(enbEF, velEF);
-
-      digitalWrite(motorDF1, HIGH);
-      digitalWrite(motorDF2, LOW);
       analogWrite(enbDF, velDF);
-
-      digitalWrite(motorET1, HIGH);
-      digitalWrite(motorET2, LOW);
       analogWrite(enbET, velET);
-
-      digitalWrite(motorDT1, HIGH);
-      digitalWrite(motorDT2, LOW);
       analogWrite(enbDT, velDT);
 
-      movimentacaoolho();
+      digitalWrite(motorEF1, HIGH);
+      digitalWrite(motorEF2, LOW);
+
+      digitalWrite(motorDF1, LOW);
+      digitalWrite(motorDF2, HIGH);
+
+      digitalWrite(motorET1, LOW);
+      digitalWrite(motorET2, HIGH);
+
+      digitalWrite(motorDT1, LOW);
+      digitalWrite(motorDT2, HIGH);
     }
 
     if (tagID == 1) {
@@ -183,112 +245,57 @@ void loop() {
 
       digitalWrite(motorDT1, LOW);
       digitalWrite(motorDT2, LOW);
-
-      movimentacaoolho();
     }
 
     if (tagID == 2) {
-      Vy = (KpPersp * erroPerspectiva);
-      if (erroPerspectiva > 0) {
-        float velEF = 75 - Vy;
-        float velDF = 75 - Vy;
-        float velET = 75 + Vy;
-        float velDT = 75 + Vy;
-
-        velEF = constrain(velEF, 0, 255);
-        velDF = constrain(velDF, 0, 255);
-        velET = constrain(velET, 0, 255);
-        velDT = constrain(velDT, 0, 255);
-
-        digitalWrite(motorEF1, LOW);
-        digitalWrite(motorEF2, HIGH);
-        analogWrite(enbEF, velEF);
-
-        digitalWrite(motorDF2, HIGH);
-        digitalWrite(motorDF1, LOW);
-        analogWrite(enbDF, velDF);
-
-        digitalWrite(motorET2, HIGH);
-        digitalWrite(motorET1, LOW);
-        analogWrite(enbET, velET);
-
-        digitalWrite(motorDT1, HIGH);
-        digitalWrite(motorDT2, LOW);
-        analogWrite(enbDT, velDT);
-        movimentacaoolho();
-      }
-  
-  
-   void girar(int lado, unsigned long tempo){
-
-  // lado = 1  -> gira para a direita
-  // lado = -1 -> gira para a esquerda
-
-  if (lado == 1)
-  {
-    // ==============================
-    // GIRAR PARA A DIREITA
-    // ==============================
-
-    // Lado esquerdo para frente
-    digitalWrite(motorEF1, LOW);
-    digitalWrite(motorEF2, HIGH);
-
-    digitalWrite(motorET1, HIGH);
-    digitalWrite(motorET2, LOW);
-
-    // Lado direito para trás
-    digitalWrite(motorDF1, LOW);
-    digitalWrite(motorDF2, HIGH);
-
-    digitalWrite(motorDT1, LOW);
-    digitalWrite(motorDT2, HIGH);
+      girar(1, 1200);
+      delay(500);
+    }
   }
-  else if (lado == -1)
-  {
-    // ==============================
-    // GIRAR PARA A ESQUERDA
-    // ==============================
-
-    // Lado esquerdo para trás
-    digitalWrite(motorEF1, HIGH);
-    digitalWrite(motorEF2, LOW);
-
-    digitalWrite(motorET1, LOW);
-    digitalWrite(motorET2, HIGH);
-
-    // Lado direito para frente
-    digitalWrite(motorDF1, HIGH);
-    digitalWrite(motorDF2, LOW);
-
-    digitalWrite(motorDT1, HIGH);
-    digitalWrite(motorDT2, LOW);
-  }
-
-  // Liga todos os motores na velocidade desejada
-  analogWrite(enbEF, 100);
-  analogWrite(enbDF, 100);
-  analogWrite(enbET, 100);
-  analogWrite(enbDT, 100);
-
-  // Mantém o robô girando pelo tempo determinado
-  delay(tempo);
-
-  // ==============================
-  // PARA TODOS OS MOTORES
-  // ==============================
-
-  analogWrite(enbEF, 0);
-  analogWrite(enbDF, 0);
-  analogWrite(enbET, 0);
-  analogWrite(enbDT, 0);
-}
-  }
-
   if (tagID == 3) {
     movimentacaoolho();
+    switch (PosicaoOlho) {
+    case 1:
+      olho(0, 90);
+      break;
+    case 2:
+      olho(45, 90);
+      break;
+    case 3:
+      olho(90, 90);
+      break;
+    case 4:
+      olho(0, 50);
+      break;
+    case 5:
+      olho(45, 50);
+      break;
+    case 6:
+      olho(90, 50);
+      break;
+    case 7:
+      olho(0, 30);
+      break;
+    case 8:
+      olho(45, 30);
+      break;
+    case 9:
+      olho(90, 30);
+      break;
+
   }
   }
+
+  if (tagID == 4) {
+ 
+    
+    }
+}
+
+
+// lado = 1  -> gira para a direita
+// lado = -1 -> gira para a esquerda
+
 
 
 void olho(int vertical2, int horizontal2) {
@@ -326,19 +333,4 @@ void movimentacaoolho() {
       olho(90, 30);
       break;
   }
-
-    if (tagID == 4) {
-
-      if(!bracosLevantados){
-         levantarBracos();
-         bracosLevantados = true;
-
-         direito.write(0);
-         esquerdo.write(180);
-         delay(500);
-         direito.write(180);
-         esquerdo.write(0);
-      }
-    
-
 }
