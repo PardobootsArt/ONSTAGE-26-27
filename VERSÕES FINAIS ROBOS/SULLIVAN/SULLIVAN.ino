@@ -89,6 +89,8 @@ bool varreduraCompleta = false;
 int procurarObjeto() {
   while (true) {
     meuServo.write(posicaoAtual);
+    int oi = posicaoAtual * (-2);
+    girarTronco(110, oi);
     delay(15);
 
     int distancia = lerDistancia();
@@ -317,7 +319,18 @@ void esquerda(int velo, int tempoMs) {
     digitalWrite(motorDT1, LOW);
     digitalWrite(motorDT2, HIGH);
   }
-  pararMotores();
+  analogWrite(enbEF, 0);
+  analogWrite(enbDF, 0);
+  analogWrite(enbET, 0);
+  analogWrite(enbDT, 0);
+  digitalWrite(motorEF1, LOW);
+  digitalWrite(motorEF2, LOW);
+  digitalWrite(motorDF1, LOW);
+  digitalWrite(motorDF2, LOW);
+  digitalWrite(motorET1, LOW);
+  digitalWrite(motorET2, LOW);
+  digitalWrite(motorDT1, LOW);
+  digitalWrite(motorDT2, LOW);
 }
 //ok
 void direita(int velo, int tempoMs) {
@@ -345,7 +358,18 @@ void direita(int velo, int tempoMs) {
     digitalWrite(motorDT1, HIGH);
     digitalWrite(motorDT2, LOW);
   }
-  pararMotores();
+  analogWrite(enbEF, 0);
+  analogWrite(enbDF, 0);
+  analogWrite(enbET, 0);
+  analogWrite(enbDT, 0);
+  digitalWrite(motorEF1, LOW);
+  digitalWrite(motorEF2, LOW);
+  digitalWrite(motorDF1, LOW);
+  digitalWrite(motorDF2, LOW);
+  digitalWrite(motorET1, LOW);
+  digitalWrite(motorET2, LOW);
+  digitalWrite(motorDT1, LOW);
+  digitalWrite(motorDT2, LOW);
 }
 //ok
 void frente(int velo, int tempoMs) {
@@ -373,7 +397,18 @@ void frente(int velo, int tempoMs) {
     digitalWrite(motorDT1, HIGH);
     digitalWrite(motorDT2, LOW);
   }
-  pararMotores();
+  analogWrite(enbEF, 0);
+  analogWrite(enbDF, 0);
+  analogWrite(enbET, 0);
+  analogWrite(enbDT, 0);
+  digitalWrite(motorEF1, LOW);
+  digitalWrite(motorEF2, LOW);
+  digitalWrite(motorDF1, LOW);
+  digitalWrite(motorDF2, LOW);
+  digitalWrite(motorET1, LOW);
+  digitalWrite(motorET2, LOW);
+  digitalWrite(motorDT1, LOW);
+  digitalWrite(motorDT2, LOW);
 }
 //ok
 void tras(int velo, int tempoMs) {
@@ -401,8 +436,18 @@ void tras(int velo, int tempoMs) {
     digitalWrite(motorDT2, HIGH);
     digitalWrite(motorDT1, LOW);
   }
-
-  pararMotores();
+  analogWrite(enbEF, 0);
+  analogWrite(enbDF, 0);
+  analogWrite(enbET, 0);
+  analogWrite(enbDT, 0);
+  digitalWrite(motorEF1, LOW);
+  digitalWrite(motorEF2, LOW);
+  digitalWrite(motorDF1, LOW);
+  digitalWrite(motorDF2, LOW);
+  digitalWrite(motorET1, LOW);
+  digitalWrite(motorET2, LOW);
+  digitalWrite(motorDT1, LOW);
+  digitalWrite(motorDT2, LOW);
 }
 
 int calcularTempo(int angulo) {
@@ -410,7 +455,7 @@ int calcularTempo(int angulo) {
   int erro = abs(angulo - 90);
   float fator = cos(radians(erro));
   int tempo = 50 * fator;
-  tempo = constrain(tempo, 5, 20);
+  tempo = constrain(tempo, 0, 500);
   return tempo;
 }
 
@@ -429,43 +474,73 @@ bool frenteLivre() {
 }
 
 void loop() {
-  delay(3000);
-  direita(255, 8750);
-  delay(1250);
-  while (contagemObjeto < 2) {
-    int grauss = procurarObjeto();
-    int time = calcularTempo(grauss);
-    if (grauss != -1) {
-      if (grauss > 90) {
-        //objeto na esquerda, ir para direita
-        int tempo = time * 100;
-        contagemObjeto++;
+  if (repeticao == 0) {
+    delay(3500);
+    direita(255, 9000);
+    pararMotores();
+    girarTronco(110, 200);
+    delay(2500);
+    while (contagemObjeto < 2) {
+      int grauss = procurarObjeto();
+      int tempo = (calcularTempo(grauss)) *50;
+      if (grauss != -1) {
+        if (grauss > 90) {
+          //objeto na esquerda, ir para direita
+          contagemObjeto++;
 
-        direita(165, tempo);
-        delay(200);
-        if (frenteLivre() == true) {
-          frente(255, 5250);
+          direita(165, tempo);
+          pararMotores();
+          delay(200);
+          Serial.println (tempo);
+          if (frenteLivre() == true) {
+            frente(255, 5250);
+            pararMotores();
+          }
         }
-      }
 
-      if (grauss < 90) {
-        //objeto na direita, ir para esquerda
-        int tempo = time * 100;
-        contagemObjeto++;
-        esquerda(165, tempo);
-        delay(200);
-        if (frenteLivre() == true) {
-          frente(255, 5250);
+        if (grauss < 90) {
+          //objeto na direita, ir para esquerda
+          contagemObjeto++;
+          esquerda(165, tempo);
+          pararMotores();
+          delay(200);
+          Serial.println(tempo);
+          if (frenteLivre() == true) {
+            frente(255, 5250);
+            pararMotores();
+          }
         }
+      } else if (varreduraCompleta) {
+        frente(110, 200);
+        varreduraCompleta = false;
       }
-    } else if (varreduraCompleta) {
-      frente(110, 200);
-      varreduraCompleta = false;
     }
-  }
-  delay(2000);
-  if (contagemObjeto == 3) {
-    repeticao++;
+    delay(2000);
+    if (contagemObjeto == 2) {
+      repeticao++;
+      delay(45000);
+      analogWrite(enbracoE, 120);
+      analogWrite(enbracoD, 120);
+      digitalWrite(bracoE1, HIGH);
+      digitalWrite(bracoE2, LOW);
+      digitalWrite(bracoD1, HIGH);
+      digitalWrite(bracoD2, LOW);
+      delay(550);
+      digitalWrite(bracoE1, LOW);
+      digitalWrite(bracoE2, LOW);
+      digitalWrite(bracoD1, LOW);
+      digitalWrite(bracoD2, LOW);
+      delay(6000);
+      digitalWrite(bracoE2, HIGH);
+      digitalWrite(bracoE1, LOW);
+      digitalWrite(bracoD2, HIGH);
+      digitalWrite(bracoD1, LOW);
+      delay(350);
+      digitalWrite(bracoE1, LOW);
+      digitalWrite(bracoE2, LOW);
+      digitalWrite(bracoD1, LOW);
+      digitalWrite(bracoD2, LOW);
+    }
   }
 }
 

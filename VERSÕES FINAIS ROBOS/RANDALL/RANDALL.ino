@@ -79,7 +79,7 @@ void setup() {
   digitalWrite(s0, HIGH);
   digitalWrite(s1, LOW);
   AcenderLed(175, 0, 255);
-  /*
+
   while (Serial2.available() == false){
   }
   Serial.println("comunicação serialOK");
@@ -87,13 +87,12 @@ void setup() {
   Serial.println(recieve);
   while(recieve != 3){
   }
-  delay(5000);
+  delay(45000);
   analogWrite(enbE, 85);
   analogWrite(enbD, 85);
   direcaoMotores(1);
-  delay(7000);
+  delay(8000);
   direcaoMotores(-1);
-  */
   
 }
 void direcaoMotores(int direcao) {
@@ -170,7 +169,7 @@ void loop() {
       digitalWrite(motorE2, LOW);
       digitalWrite(motorD1, LOW);
       digitalWrite(motorD2, HIGH);
-      delay(800);
+      delay(900);
       direcaoMotores(-1);
       delay(500);
     }
