@@ -39,7 +39,7 @@ int ultimoErro;
 int Kp = 25;
 int Kd = 30;
 
-int velocidadeBase = 80;
+int velocidadeBase = 75;
 
 int corAtual = 0;
 int ultimaCor = 0;
@@ -79,7 +79,6 @@ void setup() {
   digitalWrite(s0, HIGH);
   digitalWrite(s1, LOW);
   AcenderLed(175, 0, 255);
-
   while (Serial2.available() == false){
   }
   Serial.println("comunicação serialOK");
@@ -91,9 +90,9 @@ void setup() {
   analogWrite(enbE, 85);
   analogWrite(enbD, 85);
   direcaoMotores(1);
-  delay(8000);
+  delay(6000);
   direcaoMotores(-1);
-  
+
 }
 void direcaoMotores(int direcao) {
   if (direcao == -1) {

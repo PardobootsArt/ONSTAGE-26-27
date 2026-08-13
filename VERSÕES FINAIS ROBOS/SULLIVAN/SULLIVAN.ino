@@ -89,13 +89,13 @@ bool varreduraCompleta = false;
 int procurarObjeto() {
   while (true) {
     meuServo.write(posicaoAtual);
-    int oi = posicaoAtual * (-2);
+    int oi = (posicaoAtual * (-2)) + 200;
     girarTronco(110, oi);
     delay(15);
 
     int distancia = lerDistancia();
 
-    if (distancia > 0 && distancia < 20) {
+    if (distancia > 0 && distancia < 30) {
 
       delay(150);
       varreduraCompleta = false;
@@ -474,73 +474,76 @@ bool frenteLivre() {
 }
 
 void loop() {
-  if (repeticao == 0) {
-    delay(3500);
-    direita(255, 9000);
-    pararMotores();
-    girarTronco(110, 200);
-    delay(2500);
-    while (contagemObjeto < 2) {
-      int grauss = procurarObjeto();
-      int tempo = (calcularTempo(grauss)) *50;
-      if (grauss != -1) {
-        if (grauss > 90) {
-          //objeto na esquerda, ir para direita
-          contagemObjeto++;
+  if (Serial2.available()) {
+    int recieve = Serial2.parseInt();
+    if (recieve == 0 || recieve == 3) {
+      if (repeticao == 0) {
+        delay(3500);
+        direita(255, 9000);
+        pararMotores();
+        delay(2500);
+        while (contagemObjeto < 2) {
+          int grauss = procurarObjeto();
+          int tempo = (calcularTempo(grauss)) * 50;
+          if (grauss != -1) {
+            if (grauss > 90) {
+              //objeto na esquerda, ir para direita
+              contagemObjeto++;
 
-          direita(165, tempo);
-          pararMotores();
-          delay(200);
-          Serial.println (tempo);
-          if (frenteLivre() == true) {
-            frente(255, 5250);
-            pararMotores();
+              direita(165, tempo);
+              pararMotores();
+              delay(200);
+              Serial.println(tempo);
+              if (frenteLivre() == true) {
+                frente(255, 5250);
+                pararMotores();
+              }
+            }
+
+            if (grauss < 90) {
+              //objeto na direita, ir para esquerda
+              contagemObjeto++;
+              esquerda(165, tempo);
+              pararMotores();
+              delay(200);
+              Serial.println(tempo);
+              if (frenteLivre() == true) {
+                frente(255, 5250);
+                pararMotores();
+              }
+            }
+          } else if (varreduraCompleta) {
+            frente(110, 200);
+            varreduraCompleta = false;
           }
         }
-
-        if (grauss < 90) {
-          //objeto na direita, ir para esquerda
-          contagemObjeto++;
-          esquerda(165, tempo);
-          pararMotores();
-          delay(200);
-          Serial.println(tempo);
-          if (frenteLivre() == true) {
-            frente(255, 5250);
-            pararMotores();
-          }
+        delay(2000);
+        if (contagemObjeto == 2) {
+          repeticao++;
+          delay(45000);
+          analogWrite(enbracoE, 120);
+          analogWrite(enbracoD, 120);
+          digitalWrite(bracoE1, HIGH);
+          digitalWrite(bracoE2, LOW);
+          digitalWrite(bracoD1, HIGH);
+          digitalWrite(bracoD2, LOW);
+          delay(550);
+          digitalWrite(bracoE1, LOW);
+          digitalWrite(bracoE2, LOW);
+          digitalWrite(bracoD1, LOW);
+          digitalWrite(bracoD2, LOW);
+          delay(6000);
+          digitalWrite(bracoE2, HIGH);
+          digitalWrite(bracoE1, LOW);
+          digitalWrite(bracoD2, HIGH);
+          digitalWrite(bracoD1, LOW);
+          delay(350);
+          digitalWrite(bracoE1, LOW);
+          digitalWrite(bracoE2, LOW);
+          digitalWrite(bracoD1, LOW);
+          digitalWrite(bracoD2, LOW);
         }
-      } else if (varreduraCompleta) {
-        frente(110, 200);
-        varreduraCompleta = false;
       }
-    }
-    delay(2000);
-    if (contagemObjeto == 2) {
-      repeticao++;
-      delay(45000);
-      analogWrite(enbracoE, 120);
-      analogWrite(enbracoD, 120);
-      digitalWrite(bracoE1, HIGH);
-      digitalWrite(bracoE2, LOW);
-      digitalWrite(bracoD1, HIGH);
-      digitalWrite(bracoD2, LOW);
-      delay(550);
-      digitalWrite(bracoE1, LOW);
-      digitalWrite(bracoE2, LOW);
-      digitalWrite(bracoD1, LOW);
-      digitalWrite(bracoD2, LOW);
-      delay(6000);
-      digitalWrite(bracoE2, HIGH);
-      digitalWrite(bracoE1, LOW);
-      digitalWrite(bracoD2, HIGH);
-      digitalWrite(bracoD1, LOW);
-      delay(350);
-      digitalWrite(bracoE1, LOW);
-      digitalWrite(bracoE2, LOW);
-      digitalWrite(bracoD1, LOW);
-      digitalWrite(bracoD2, LOW);
     }
   }
 }
-
