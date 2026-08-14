@@ -29,7 +29,7 @@ Servo meuServo;
 #define TRIG 5
 #define ECHO 4
 int posicaoAtual = 25;
-bool sentidoHorario = true;
+bool sentidoHorario = false;
 int contagemObjeto;
 int repeticao;
 
@@ -90,7 +90,7 @@ int procurarObjeto() {
   while (true) {
     meuServo.write(posicaoAtual);
     int oi = (posicaoAtual * (-2)) + 200;
-    girarTronco(110, oi);
+    girarTronco(125, oi);
     delay(15);
 
     int distancia = lerDistancia();
@@ -101,17 +101,7 @@ int procurarObjeto() {
       varreduraCompleta = false;
       return posicaoAtual;
     }
-
-    if (sentidoHorario == true) {
-
-      posicaoAtual += 4;
-
-      if (posicaoAtual >= 145) {
-        posicaoAtual = 155;
-        sentidoHorario = false;
-      }
-
-    } else if (sentidoHorario == false) {
+    if (sentidoHorario == false) {
 
       posicaoAtual -= 4;
 
@@ -120,11 +110,47 @@ int procurarObjeto() {
         sentidoHorario = true;
         varreduraCompleta = true;
       }
+    } else if (sentidoHorario == true) {
+
+      posicaoAtual += 4;
+
+      if (posicaoAtual >= 145) {
+        posicaoAtual = 155;
+        sentidoHorario = false;
+      }
     }
   }
   return -1;
 }
 
+void radar() {
+  int repeticoes;
+  while (repeticoes < 4) {
+    meuServo.write(posicaoAtual);
+    int oi = (posicaoAtual * (-2)) + 200;
+    girarTronco(120, oi);
+    delay(15);
+    if (sentidoHorario == false) {
+
+      posicaoAtual -= 4;
+
+      if (posicaoAtual <= 25) {
+        posicaoAtual = 25;
+        sentidoHorario = true;
+        varreduraCompleta = true;
+      }
+    } else if (sentidoHorario == true) {
+
+      posicaoAtual += 4;
+
+      if (posicaoAtual >= 145) {
+        posicaoAtual = 155;
+        sentidoHorario = false;
+        repeticoes++;
+      }
+    }
+  }
+}
 
 //==================GIROSCÓPIO=================
 void iniciarMPU() {
@@ -478,10 +504,12 @@ void loop() {
     int recieve = Serial2.parseInt();
     if (recieve == 0 || recieve == 3) {
       if (repeticao == 0) {
-        delay(3500);
+        delay(5500);
         direita(255, 9000);
         pararMotores();
-        delay(2500);
+        delay(500);
+        frente(255, 1500);
+        delay(1000);
         while (contagemObjeto < 2) {
           int grauss = procurarObjeto();
           int tempo = (calcularTempo(grauss)) * 50;
@@ -528,16 +556,6 @@ void loop() {
           digitalWrite(bracoD1, HIGH);
           digitalWrite(bracoD2, LOW);
           delay(550);
-          digitalWrite(bracoE1, LOW);
-          digitalWrite(bracoE2, LOW);
-          digitalWrite(bracoD1, LOW);
-          digitalWrite(bracoD2, LOW);
-          delay(6000);
-          digitalWrite(bracoE2, HIGH);
-          digitalWrite(bracoE1, LOW);
-          digitalWrite(bracoD2, HIGH);
-          digitalWrite(bracoD1, LOW);
-          delay(350);
           digitalWrite(bracoE1, LOW);
           digitalWrite(bracoE2, LOW);
           digitalWrite(bracoD1, LOW);

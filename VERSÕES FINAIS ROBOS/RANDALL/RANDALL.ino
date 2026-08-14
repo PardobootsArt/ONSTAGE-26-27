@@ -36,8 +36,8 @@ long durationT;
 int distTras;
 
 int ultimoErro;
-int Kp = 25;
-int Kd = 30;
+int Kp = 15;
+int Kd = 20;
 
 int velocidadeBase = 75;
 
@@ -88,11 +88,11 @@ void setup() {
   }
   delay(45000);
   analogWrite(enbE, 85);
-  analogWrite(enbD, 85);
+  analogWrite(enbD, 100);
   direcaoMotores(1);
-  delay(6000);
+  delay(5000);
   direcaoMotores(-1);
-
+  
 }
 void direcaoMotores(int direcao) {
   if (direcao == -1) {
@@ -138,7 +138,7 @@ void loop() {
     velEsq = constrain(velEsq, 0, 255);
     velDir = constrain(velDir, 0, 255);
     analogWrite(enbE, velEsq);
-    analogWrite(enbD, velDir);
+    analogWrite(enbD, velDir + 5);
     ultimoErro = erro;
     
 
@@ -157,7 +157,7 @@ void loop() {
       camuflagemRandall = true;
       AcenderLed(175, 0, 255);
       analogWrite(enbE, 65);
-      analogWrite(enbD, 65);
+      analogWrite(enbD, 75);
       direcaoMotores(1);
       delay(1800);
       direcaoMotores(-1);
@@ -168,9 +168,9 @@ void loop() {
       digitalWrite(motorE2, LOW);
       digitalWrite(motorD1, LOW);
       digitalWrite(motorD2, HIGH);
-      delay(900);
+      delay(950);
       direcaoMotores(-1);
-      delay(500);
+      delay(2000);
     }
   }
 
@@ -190,7 +190,7 @@ void loop() {
     velEsq = constrain(velEsq, 0, 255);
     velDir = constrain(velDir, 0, 255);
     analogWrite(enbE, velEsq);
-    analogWrite(enbD, velDir);
+    analogWrite(enbD, velDir + 5);
     ultimoErro = erro;
 
     Serial.print("Azul ");
@@ -259,7 +259,7 @@ void loop() {
       }
 
       // A nova cor apareceu 3 vezes seguidas
-      if (contadorLeituras >= 5) {
+      if (contadorLeituras >= 10) {
 
         // Só conta se for diferente da última fileira registrada
         if (corEmConfirmacao != ultimaCor) {
