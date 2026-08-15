@@ -49,7 +49,8 @@ int corEmConfirmacao = 0;
 int contadorLeituras = 0;
 
 bool encontrouTresCores = false;
-
+int repeticao;
+int a;
 
 void setup() {
   // put your setup code here, to run once:
@@ -79,15 +80,14 @@ void setup() {
   digitalWrite(s0, HIGH);
   digitalWrite(s1, LOW);
   AcenderLed(175, 0, 255);
-  while (Serial2.available() == false){
+  repeticao == 0;
+  a = 0;
+  while (a < 1) {
+    int distancia = calDistanciaF();
+    if (distancia > 0 && distancia < 10) {
+      a = 3;
+    }
   }
-  Serial.println("comunicação serialOK");
-  int recieve = Serial2.parseInt();
-  Serial.println(recieve);
-  while(recieve != 3){
-  }
-  delay(45000);
-  
 }
 void direcaoMotores(int direcao) {
   if (direcao == -1) {
@@ -135,7 +135,7 @@ void loop() {
     analogWrite(enbE, velEsq);
     analogWrite(enbD, velDir + 5);
     ultimoErro = erro;
-    
+
 
     Serial.print("Azul ");
     Serial.print(blue);
@@ -154,7 +154,7 @@ void loop() {
       analogWrite(enbE, 65);
       analogWrite(enbD, 75);
       direcaoMotores(1);
-      delay(1800);
+      delay(1550);
       direcaoMotores(-1);
       delay(1000);
       analogWrite(enbE, 165);
@@ -285,6 +285,7 @@ void loop() {
     }
   }
 }
+
 void color() {
   //Rotina que le o valor das cores
   digitalWrite(s2, LOW);

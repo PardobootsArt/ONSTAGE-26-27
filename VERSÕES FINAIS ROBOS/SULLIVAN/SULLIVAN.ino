@@ -500,62 +500,62 @@ bool frenteLivre() {
 }
 
 void loop() {
-  if (Serial2.available()) {
-    int recieve = Serial2.parseInt();
-    if (recieve == 0 || recieve == 3) {
-      if (repeticao == 0) {
-        delay(5500);
-        direita(255, 9000);
-        pararMotores();
-        delay(500);
-        frente(255, 1500);
-        delay(1000);
-        while (contagemObjeto < 2) {
-          int grauss = procurarObjeto();
-          int tempo = (calcularTempo(grauss)) * 50;
-          if (grauss != -1) {
-            if (grauss > 90) {
-              //objeto na esquerda, ir para direita
-              contagemObjeto++;
+  int distancia = lerDistancia();
+  if (distancia > 0 && distancia < 10) {
+    if (repeticao == 0) {
+      repeticao++;
+      delay(5500);
+      direita(255, 8000);
+      pararMotores();
+      delay(500);
+      frente(255, 1000);
+      delay(1000);
+      while (contagemObjeto < 2) {
+        int grauss = procurarObjeto();
+        int tempo = (calcularTempo(grauss)) * 50;
+        if (grauss != -1) {
+          if (grauss > 90) {
+            //objeto na esquerda, ir para direita
+            contagemObjeto++;
 
-              direita(165, tempo);
+            direita(165, tempo);
+            pararMotores();
+            delay(200);
+            Serial.println(tempo);
+            if (frenteLivre() == true) {
+              frente(255, 4500);
               pararMotores();
-              delay(200);
-              Serial.println(tempo);
-              if (frenteLivre() == true) {
-                frente(255, 5250);
-                pararMotores();
-              }
             }
-
-            if (grauss < 90) {
-              //objeto na direita, ir para esquerda
-              contagemObjeto++;
-              esquerda(165, tempo);
-              pararMotores();
-              delay(200);
-              Serial.println(tempo);
-              if (frenteLivre() == true) {
-                frente(255, 5250);
-                pararMotores();
-              }
-            }
-          } else if (varreduraCompleta) {
-            frente(110, 200);
-            varreduraCompleta = false;
           }
+
+          if (grauss < 90) {
+            //objeto na direita, ir para esquerda
+            contagemObjeto++;
+            esquerda(165, tempo);
+            pararMotores();
+            delay(200);
+            Serial.println(tempo);
+            if (frenteLivre() == true) {
+              frente(255, 4500);
+              pararMotores();
+            }
+          }
+        } else if (varreduraCompleta) {
+          frente(110, 200);
+          varreduraCompleta = false;
         }
-        delay(2000);
-        if (contagemObjeto == 2) {
-          repeticao++;
-          delay(45000);
+      }
+      delay(2000);
+      while (contagemObjeto > 1) {
+        int distancia = lerDistancia();
+        if (distancia > 0 && distancia < 15) {
           analogWrite(enbracoE, 120);
           analogWrite(enbracoD, 120);
           digitalWrite(bracoE1, HIGH);
           digitalWrite(bracoE2, LOW);
           digitalWrite(bracoD1, HIGH);
           digitalWrite(bracoD2, LOW);
-          delay(550);
+          delay(500);
           digitalWrite(bracoE1, LOW);
           digitalWrite(bracoE2, LOW);
           digitalWrite(bracoD1, LOW);
