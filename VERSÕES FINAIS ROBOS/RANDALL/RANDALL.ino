@@ -87,11 +87,6 @@ void setup() {
   while(recieve != 3){
   }
   delay(45000);
-  analogWrite(enbE, 85);
-  analogWrite(enbD, 100);
-  direcaoMotores(1);
-  delay(5000);
-  direcaoMotores(-1);
   
 }
 void direcaoMotores(int direcao) {
