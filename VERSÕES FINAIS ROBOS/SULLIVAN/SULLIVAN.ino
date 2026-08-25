@@ -1,6 +1,6 @@
 //giroscopio
 #include <Wire.h>
-const int MPU = 0x68;
+const int MPU = 0x68; 
 
 float anguloZ = 0.0;
 unsigned long ultimoTempo;
