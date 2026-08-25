@@ -118,7 +118,7 @@ void loop() {
     Serial.println(velDir);
 
     delay(10);
-    if (green > 300 && green < 500 && red > 800 && green < blue) {
+    if (green > 300 && green < 900 && red > 800 && green > blue) {
       camuflagemRandall = true;
       Serial.println("Iniciando Camuflagem Randall...");
       delay(50);
