@@ -1,3 +1,6 @@
+#include "mpu6050.h"
+//=====pinos=======
+
 const int s0 = 40;
 const int s1 = 42;
 const int s2 = 44;
@@ -36,10 +39,10 @@ long durationT;
 int distTras;
 
 int ultimoErro;
-int Kp = 25;
-int Kd = 30;
+int Kp = 15;
+int Kd = 20;
 
-int velocidadeBase = 80;
+int velocidadeBase = 75;
 
 int corAtual = 0;
 int ultimaCor = 0;
@@ -49,12 +52,21 @@ int corEmConfirmacao = 0;
 int contadorLeituras = 0;
 
 bool encontrouTresCores = false;
-
+int repeticao;
+int a;
 
 void setup() {
   // put your setup code here, to run once:
 
   Serial2.begin(115200);
+  mpu_begin();
+
+  Serial.println("Calibrando, deixa parado!");
+  delay(1000);
+  mpu_calibrate(200);
+  Serial.println("===== Calibrado! =====\n");
+
+  mpu_reset();
   pinMode(motorE1, OUTPUT);
   pinMode(motorE2, OUTPUT);
   pinMode(motorD1, OUTPUT);
@@ -66,7 +78,7 @@ void setup() {
   pinMode(echoPin, INPUT);
   pinMode(trigPin2, OUTPUT);
   pinMode(echoPin2, INPUT);
-  Serial.begin(115200);
+  Serial.begin(9600);
   //Led e sensor de cor
   pinMode(s0, OUTPUT);
   pinMode(s1, OUTPUT);
@@ -79,21 +91,14 @@ void setup() {
   digitalWrite(s0, HIGH);
   digitalWrite(s1, LOW);
   AcenderLed(175, 0, 255);
-
-  while (Serial2.available() == false){
+  repeticao == 0;
+  a = 0;
+  while (a < 1) {
+    int distancia = calDistanciaF();
+    if (distancia > 0 && distancia < 5) {
+      a = 3;
+    }
   }
-  Serial.println("comunicação serialOK");
-  int recieve = Serial2.parseInt();
-  Serial.println(recieve);
-  while(recieve != 3){
-  }
-  delay(45000);
-  analogWrite(enbE, 85);
-  analogWrite(enbD, 85);
-  direcaoMotores(1);
-  delay(8000);
-  direcaoMotores(-1);
-  
 }
 void direcaoMotores(int direcao) {
   if (direcao == -1) {
@@ -118,6 +123,7 @@ void direcaoMotores(int direcao) {
 
 //=========================VOID LOOP===================
 void loop() {
+  mpu_loop();
   if (encontrouTresCores) {
     analogWrite(enbE, 0);
     analogWrite(enbD, 0);
@@ -128,9 +134,7 @@ void loop() {
     direcaoMotores(1);
     color();
     //===============CERTO CORRECAO (NAO MEXER)=========
-    distFrente = calDistanciaF();
-    distTras = calDistanciaT();
-    int erro = (distFrente - distTras);
+    int erro = getAngleZ();
     int correcaoP = Kp * erro;
     int correcaoD = Kd * (ultimoErro - erro);
     int correcaoFinal = correcaoP + correcaoD;
@@ -141,8 +145,9 @@ void loop() {
     analogWrite(enbE, velEsq);
     analogWrite(enbD, velDir);
     ultimoErro = erro;
-    
-
+    Serial.print(velEsq);
+    Serial.println(velDir);
+    /*
     Serial.print("Azul ");
     Serial.print(blue);
     Serial.print(" vermelho ");
@@ -153,14 +158,15 @@ void loop() {
     Serial.print(distFrente);
     Serial.print("Ultra Tras: ");
     Serial.println(distTras);
+    */
     if (green > 500 && red > 500 && blue > 400) {
       Serial.println("PRETO DETECTADO");
       camuflagemRandall = true;
       AcenderLed(175, 0, 255);
       analogWrite(enbE, 65);
-      analogWrite(enbD, 65);
+      analogWrite(enbD, 75);
       direcaoMotores(1);
-      delay(1800);
+      delay(1550);
       direcaoMotores(-1);
       delay(1000);
       analogWrite(enbE, 165);
@@ -169,9 +175,9 @@ void loop() {
       digitalWrite(motorE2, LOW);
       digitalWrite(motorD1, LOW);
       digitalWrite(motorD2, HIGH);
-      delay(900);
+      delay(950);
       direcaoMotores(-1);
-      delay(500);
+      delay(2000);
     }
   }
 
@@ -191,7 +197,7 @@ void loop() {
     velEsq = constrain(velEsq, 0, 255);
     velDir = constrain(velDir, 0, 255);
     analogWrite(enbE, velEsq);
-    analogWrite(enbD, velDir);
+    analogWrite(enbD, velDir + 5);
     ultimoErro = erro;
 
     Serial.print("Azul ");
@@ -260,7 +266,7 @@ void loop() {
       }
 
       // A nova cor apareceu 3 vezes seguidas
-      if (contadorLeituras >= 5) {
+      if (contadorLeituras >= 10) {
 
         // Só conta se for diferente da última fileira registrada
         if (corEmConfirmacao != ultimaCor) {
@@ -291,6 +297,7 @@ void loop() {
     }
   }
 }
+
 void color() {
   //Rotina que le o valor das cores
   digitalWrite(s2, LOW);
