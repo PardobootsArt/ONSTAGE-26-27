@@ -84,7 +84,7 @@ void setup() {
   a = 0;
   while (a < 1) {
     int distancia = calDistanciaF();
-    if (distancia > 0 && distancia < 10) {
+    if (distancia > 0 && distancia < 5) {
       a = 3;
     }
   }

@@ -555,9 +555,10 @@ void loop() {
           digitalWrite(bracoE2, LOW);
           digitalWrite(bracoD1, HIGH);
           digitalWrite(bracoD2, LOW);
-          delay(500);
+          delay(450);
           digitalWrite(bracoE1, LOW);
           digitalWrite(bracoE2, LOW);
+          delay(50);
           digitalWrite(bracoD1, LOW);
           digitalWrite(bracoD2, LOW);
         }
