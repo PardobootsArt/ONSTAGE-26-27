@@ -1,336 +1,257 @@
-#include <Servo.h>
-//olho
-Servo horizontal;
-Servo vertical;
+const int s0 = 40;
+const int s1 = 42;
+const int s2 = 44;
+const int s3 = 46;
+const int out = 41;
 
-//braços
-Servo direito;   //braço direito
-Servo esquerdo;  //braço esquerdo
-bool bracosLevantados = false;
+//Pinos do led RGB
+int Pin_RED = 7;
+int Pin_GREEN = 8;
+int Pin_BLUE = 9;
 
-// protótipos das funções
-void movimentacaoolho();
-void olho(int vertical2, int horizontal2);
-void levantarBracos();
-void girar(int lado, unsigned long tempo);
+//Variaveis cores
+int red = 0;
+int green = 0;
+int blue = 0;
+bool camuflagemRandall = false;
 
-//=====================================================
-// VARIÁVEIS RECEBIDAS DO PYTHON
-//=====================================================
+// motores
+int motorE1 = 22;
+int motorE2 = 24;
+int motorD1 = 26;
+int motorD2 = 28;
+int enbE = 11;
+int enbD = 10;
 
-// ID da Apriltag detectada.
-// Se for -1 significa que nenhuma tag foi encontrada.
-int tagID = -1;
+// Define os pinos Trig e Echo do sensor ultrassônico
+const int trigPin = 3;
+const int echoPin = 4;
 
-// Erro horizontal em pixels.
-float erroX = 0;
+const int trigPin2 = 5;
+const int echoPin2 = 6;
+// Variáveis para a duração e a distância
+long durationF;
+int distFrente;
+long durationT;
+int distTras;
 
-// Erro de distância.
-float erroDistancia = 0;
+float Kp = 5.0;
 
-float erroPerspectiva = 0;
+int velocidadeBase = 60;
 
-int PosicaoOlho = 0;
-
-
-//=====================================================
-// GANHOS DO CONTROLADOR
-//=====================================================
-
-float KpX = 0.5;     // Controle lateral
-float KpDist = 0.6;  // Controle da distância
-float KpPersp = 100;
-
-
-//=====================================================
-// VELOCIDADES CALCULADAS
-//=====================================================
-
-float Vx = 0;
-
-float Vy = 0;
-
-float W = 0;
-
-//=====================================================
-// PORTAS MOTORES
-//=====================================================
-
-int motorDF1 = 22;
-int motorDF2 = 24;
-int motorEF1 = 26;
-int motorEF2 = 28;
-int motorDT1 = 30;
-int motorDT2 = 32;
-int motorET1 = 34;
-int motorET2 = 36;
-
-int enbEF = 11;
-int enbDF = 10;
-int enbET = 13;
-int enbDT = 12;
+int distBase = 10;
 
 void setup() {
+  // put your setup code here, to run once:
+  pinMode (motorE1, OUTPUT);
+  pinMode (motorE2, OUTPUT);
+  pinMode (motorD1, OUTPUT);
+  pinMode (motorD2, OUTPUT);
+  pinMode (enbE, OUTPUT);
+  pinMode (enbD, OUTPUT);
+
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  pinMode(trigPin2, OUTPUT);
+  pinMode(echoPin2, INPUT);
   Serial.begin(9600);
+  //Led e sensor de cor
+  pinMode(s0, OUTPUT);
+  pinMode(s1, OUTPUT);
+  pinMode(s2, OUTPUT);
+  pinMode(s3, OUTPUT);
+  pinMode(out, INPUT);
+  pinMode(Pin_RED, OUTPUT);
+  pinMode(Pin_GREEN, OUTPUT);
+  pinMode(Pin_BLUE, OUTPUT);
+  Serial.begin(9600);
+  digitalWrite(s0, HIGH);
+  digitalWrite(s1, LOW);
 
-  pinMode(motorEF1, OUTPUT);
-  pinMode(motorEF2, OUTPUT);
-  pinMode(motorDF1, OUTPUT);
-  pinMode(motorDF2, OUTPUT);
-  pinMode(motorET1, OUTPUT);
-  pinMode(motorET2, OUTPUT);
-  pinMode(motorDT1, OUTPUT);
-  pinMode(motorDT2, OUTPUT);
+  digitalWrite (motorE1, HIGH);
+  digitalWrite (motorE2, LOW);
+  digitalWrite (motorD1, HIGH);
+  digitalWrite (motorD2, LOW);
 
-  pinMode(enbEF, OUTPUT);
-  pinMode(enbDF, OUTPUT);
-  pinMode(enbET, OUTPUT);
-  pinMode(enbDT, OUTPUT);
-  pinMode(13, OUTPUT);
-
-  horizontal.attach(3);
-  vertical.attach(2);
-}
-//braços:
-void levantarBracos() {
-
-  direito.attach(4);
-  esquerdo.attach(5);
-  esquerdo.write(180);
-  direito.write(0);
-  delay(500);
-  direito.write(90);
-  esquerdo.write(120);
-  delay(500);
-}
-void girar(int lado, unsigned long tempo) {
-  // lado = 1  -> gira para a direita
-  // lado = -1 -> gira para a esquerda
-
-  if (lado == 1) {
-    // ==============================
-    // GIRAR PARA A DIREITA
-    // ==============================
-
-    // Lado esquerdo para frente
-    digitalWrite(motorEF1, LOW);
-    digitalWrite(motorEF2, HIGH);
-
-    digitalWrite(motorET1, HIGH);
-    digitalWrite(motorET2, LOW);
-
-    // Lado direito para trás
-    digitalWrite(motorDF1, LOW);
-    digitalWrite(motorDF2, HIGH);
-
-    digitalWrite(motorDT1, LOW);
-    digitalWrite(motorDT2, HIGH);
-  }
-
-  else if (lado == -1) {
-    // ==============================
-    // GIRAR PARA A ESQUERDA
-    // ==============================
-
-    // Lado esquerdo para trás
-    digitalWrite(motorEF1, HIGH);
-    digitalWrite(motorEF2, LOW);
-
-    digitalWrite(motorET1, LOW);
-    digitalWrite(motorET2, HIGH);
-
-    // Lado direito para frente
-    digitalWrite(motorDF1, HIGH);
-    digitalWrite(motorDF2, LOW);
-
-    digitalWrite(motorDT1, HIGH);
-    digitalWrite(motorDT2, LOW);
-  }
-  // Liga todos os motores na velocidade desejada
-  analogWrite(enbEF, 100);
-  analogWrite(enbDF, 100);
-  analogWrite(enbET, 100);
-  analogWrite(enbDT, 100);
-
-  // Mantém o robô girando pelo tempo determinado
-  delay(tempo);
-
-  // ==============================
-  // PARA TODOS OS MOTORES
-  // ==============================
-
-  analogWrite(enbEF, 0);
-  analogWrite(enbDF, 0);
-  analogWrite(enbET, 0);
-  analogWrite(enbDT, 0);
 }
 
 void loop() {
 
-  // erroDistancia já veio do Python
-  if (Serial.available()) {
-    // Lê uma linha inteira enviada pelo Python
-    String mensagem = Serial.readStringUntil('\n');
+  //Detecta a cor
+  color();
 
-    mensagem.trim();
+  if (camuflagemRandall == false) {
+    Serial.print("Vermelho :");
+    Serial.print(red, DEC);
+    Serial.print(" Verde : ");
+    Serial.print(green, DEC);
+    Serial.print(" Azul : ");
+    Serial.print(blue, DEC);
+    Serial.println();
+    Serial.println("Procurando Verde");
+    AcenderLed(200, 0, 255);
 
-    // Procura as vírgulas
-    int primeiraVirgula = mensagem.indexOf(',');
+    //motores
+    distFrente = calDistanciaF ();
+    distTras = calDistanciaT ();
 
-    int segundaVirgula = mensagem.indexOf(',', primeiraVirgula + 1);
 
-    int terceiraVirgula = mensagem.indexOf(',', segundaVirgula + 1);
+   int erro = (distFrente - distTras) * (-1);   
+   int correcao = Kp * erro;
 
-    // Se encontrou todas as vírgulas...
-    if (primeiraVirgula != -1 && segundaVirgula != -1 && terceiraVirgula != -1) {
-      // Separa cada informação
+    int velEsq = velocidadeBase + correcao;
+    int velDir = velocidadeBase - correcao;
 
-      tagID = mensagem.substring(0, primeiraVirgula).toInt();
+    velEsq = constrain(velEsq, 0, 255);
+    velDir = constrain(velDir, 0, 255);
 
-      erroX = mensagem.substring(primeiraVirgula + 1,
-                                 segundaVirgula)
-                .toFloat();
+    analogWrite(enbE, velEsq);
+    analogWrite(enbD, velDir);
 
-      erroDistancia = mensagem.substring(segundaVirgula + 1,
-                                         terceiraVirgula)
-                        .toFloat();
+    Serial.print("Erro: ");
+    Serial.print(erro);
 
-      PosicaoOlho = mensagem.substring(terceiraVirgula + 1).toInt();
-    }
+   Serial.print("  Esq: ");
+   Serial.print(velEsq);
 
-    if (tagID == 0) {
+   Serial.print("  Dir: ");
+    Serial.println(velDir);
 
-      int velocidadeBase = 80;
-      // Controle proporcional
-
-      Vx = velocidadeBase + (KpDist * erroDistancia);
-      W = KpX * erroX;
-      // Limita o PWM
-      float velEF = Vx + W;
-      float velDF = Vx - W;
-      float velET = Vx - W;
-      float velDT = Vx + W;
-
-      velEF = constrain(velEF, 0, 255);
-      velDF = constrain(velDF, 0, 255);
-      velET = constrain(velET, 0, 255);
-      velDT = constrain(velDT, 0, 255);
-      analogWrite(enbEF, velEF);
-      analogWrite(enbDF, velDF);
-      analogWrite(enbET, velET);
-      analogWrite(enbDT, velDT);
-
-      digitalWrite(motorEF1, HIGH);
-      digitalWrite(motorEF2, LOW);
-
-      digitalWrite(motorDF1, LOW);
-      digitalWrite(motorDF2, HIGH);
-
-      digitalWrite(motorET1, LOW);
-      digitalWrite(motorET2, HIGH);
-
-      digitalWrite(motorDT1, LOW);
-      digitalWrite(motorDT2, HIGH);
-    }
-
-    if (tagID == 1) {
-      digitalWrite(motorEF1, LOW);
-      digitalWrite(motorEF2, LOW);
-
-      digitalWrite(motorDF1, LOW);
-      digitalWrite(motorDF2, LOW);
-
-      digitalWrite(motorET1, LOW);
-      digitalWrite(motorET2, LOW);
-
-      digitalWrite(motorDT1, LOW);
-      digitalWrite(motorDT2, LOW);
-    }
-
-    if (tagID == 2) {
-      girar(1, 1200);
-      delay(500);
+    delay(10);
+    if (green > 300 && green < 900 && red > 800 && green > blue) {
+      camuflagemRandall = true;
+      Serial.println("Iniciando Camuflagem Randall...");
+      delay(50);
+      digitalWrite (motorE1, LOW);
+      digitalWrite (motorE2, LOW);
+      digitalWrite (motorD1, LOW);
+      digitalWrite (motorD2, LOW);
+      delay (500);
+      analogWrite (enbE, 200);
+      analogWrite (enbD, 200);
+      digitalWrite (motorE1, HIGH);
+      digitalWrite (motorE2, LOW);
+      digitalWrite (motorD1, LOW);
+      digitalWrite (motorD2, LOW);
+      delay (1000);
+      digitalWrite (motorE1, LOW);
+      digitalWrite (motorE2, LOW);
+      digitalWrite (motorD1, LOW);
+      digitalWrite (motorD2, LOW);
+      delay(1000);
+      digitalWrite (motorE1, HIGH);
+      digitalWrite (motorE2, LOW);
+      digitalWrite (motorD1, HIGH);
+      digitalWrite (motorD2, LOW);
     }
   }
-  if (tagID == 3) {
-    movimentacaoolho();
-    switch (PosicaoOlho) {
-    case 1:
-      olho(0, 90);
-      break;
-    case 2:
-      olho(45, 90);
-      break;
-    case 3:
-      olho(90, 90);
-      break;
-    case 4:
-      olho(0, 50);
-      break;
-    case 5:
-      olho(45, 50);
-      break;
-    case 6:
-      olho(90, 50);
-      break;
-    case 7:
-      olho(0, 30);
-      break;
-    case 8:
-      olho(45, 30);
-      break;
-    case 9:
-      olho(90, 30);
-      break;
 
-  }
-  }
+  if (camuflagemRandall == true) {
 
-  if (tagID == 4) {
- 
-    
+    Serial.print("Vermelho :");
+    Serial.print(red, DEC);
+    Serial.print(" Verde : ");
+    Serial.print(green, DEC);
+    Serial.print(" Azul : ");
+    Serial.print(blue, DEC);
+    Serial.println();
+
+    //Verifica se a cor branca foi detectada
+    if (red < 100 && green < 100 && blue < 100) {
+      Serial.println("BRANCO");
+      AcenderLed(150, 0, 255);
     }
+    //Verifica se a cor amarela foi detectada
+    else if (red < 60 && green < 100 && green < blue) {
+      Serial.println("AMARELO");
+      AcenderLed(255, 110, 0);
+    }
+    //Verifica se a cor vermelha foi detectada
+    else if (red < blue && blue < green && red < 100) {
+      Serial.println("VERMELHO");
+      AcenderLed(255, 0, 150);
+    }
+
+    //Verifica se a cor azul foi detectada
+    else if (blue < red && blue < green && blue < 1000) {
+      Serial.println("AZUL");
+      AcenderLed(64, 208, 224);
+    }
+
+  }
+  Serial.println();
+
+  //Delay para apagar os leds e reiniciar o processo
+  delay(300);
+
+  
 }
 
 
-// lado = 1  -> gira para a direita
-// lado = -1 -> gira para a esquerda
-
-
-
-void olho(int vertical2, int horizontal2) {
-  vertical.write(vertical2);
-  horizontal.write(horizontal2);
+void color() {
+  //Rotina que le o valor das cores
+  digitalWrite(s2, LOW);
+  digitalWrite(s3, LOW);
+  //count OUT, pRed, RED
+  red = pulseIn(out, digitalRead(out) == HIGH ? LOW : HIGH);
+  digitalWrite(s3, HIGH);
+  //count OUT, pBLUE, BLUE
+  blue = pulseIn(out, digitalRead(out) == HIGH ? LOW : HIGH);
+  digitalWrite(s2, HIGH);
+  //count OUT, pGreen, GREEN
+  green = pulseIn(out, digitalRead(out) == HIGH ? LOW : HIGH);
 }
 
-void movimentacaoolho() {
-  switch (PosicaoOlho) {
-    case 1:
-      olho(0, 90);
-      break;
-    case 2:
-      olho(45, 90);
-      break;
-    case 3:
-      olho(90, 90);
-      break;
-    case 4:
-      olho(0, 50);
-      break;
-    case 5:
-      olho(45, 50);
-      break;
-    case 6:
-      olho(90, 50);
-      break;
-    case 7:
-      olho(0, 30);
-      break;
-    case 8:
-      olho(45, 30);
-      break;
-    case 9:
-      olho(90, 30);
-      break;
+void AcenderLed(int R, int G, int B) {
+  analogWrite(Pin_RED, R);
+  analogWrite(Pin_GREEN, G);
+  analogWrite(Pin_BLUE, B);
+}
+  
+
+
+int calDistanciaF() {
+
+    digitalWrite(trigPin, LOW);
+    delayMicroseconds(2);
+    // Define o trigPin no estado HIGH por 10 micro segundos
+    digitalWrite(trigPin, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(trigPin, LOW);
+    durationF = pulseIn(echoPin, HIGH);  // Lê o echoPin, retorna o tempo de viagem da onda sonora em microssegundos
+    distFrente = durationF * 0.034 / 2;
+    return distFrente;
   }
-}
+
+  int calDistanciaT() {
+
+    digitalWrite(trigPin2, LOW);
+    delayMicroseconds(2);
+    // Define o trigPin no estado HIGH por 10 micro segundos
+    digitalWrite(trigPin2, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(trigPin2, LOW);
+    durationT = pulseIn(echoPin2, HIGH);  // Lê o echoPin, retorna o tempo de viagem da onda sonora em microssegundos
+    distTras = durationT * 0.034 / 2;
+    return distTras;
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// 

@@ -7,7 +7,6 @@ from pyapriltags import Detector
 import serial
 import serial.tools.list_ports
 import time
-
 # 1. INICIALIZA O DETECTOR DE APRILTAGS DO PC
 # (Especificamos a família padrão: tag36h11)
 at_detector = Detector(families='tag36h11',
@@ -116,7 +115,7 @@ while True:
             erro_x = cx - centro_tela_x
 
             # Distância desejada.
-            DISTANCIA_DESEJADA = 180
+            DISTANCIA_DESEJADA = 240
 
             # Erro de distância.
             erro_distancia = DISTANCIA_DESEJADA - tagLength
@@ -174,7 +173,7 @@ while True:
             print("Mensagem enviada ao Arduino:")
 
             print(f"{erro_x:.2f}, {erro_distancia:.2f}, {erro_Perspectiva:.2f}, {Vx:.2f}, {Wx:.2f}, {Vy:.2f}")
-
+ 
             print("-------------------------------------")
             
         elif tag.tag_id == 1:
@@ -247,6 +246,20 @@ while True:
              print("TAG 4")
              mensagem = "4,0,0,0\n"
              arduino.write(mensagem.encode())
+
+        elif tag.tag_id == 5:
+                     tag_detectada = True
+                    
+                     print("TAG 5")
+                     mensagem = "5,0,0,0\n"
+                     arduino.write(mensagem.encode())
+
+        elif tag.tag_id == 6:
+                     tag_detectada = True
+                    
+                     print("TAG 6")
+                     mensagem = "6,0,0,0\n" 
+                     arduino.write(mensagem.encode())
             
 
     if not tag_detectada:
