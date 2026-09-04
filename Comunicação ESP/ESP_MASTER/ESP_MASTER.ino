@@ -2,6 +2,18 @@
 
 BluetoothSerial SerialBT;
 
+const int IN1 = 14;
+const int IN2 = 27;
+const int ENA = 12;
+
+// Pino do LED
+const int led = 33;
+
+float duration;
+float distance;
+
+bool objetoDetectado = false;
+
 // MAC da ESP B
 uint8_t macESP_B[] = {
   0x3C,
@@ -15,11 +27,6 @@ uint8_t macESP_B[] = {
 const int trigPin = 18;
 const int echoPin = 19;
 
-float duration;
-float distance;
-
-bool objetoDetectado = false;
-
 void setup() {
   Serial.begin(115200);
 
@@ -27,6 +34,18 @@ void setup() {
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
 
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+  pinMode(ENA, OUTPUT);
+
+  // Define o pino do LED
+  pinMode(led, OUTPUT);
+
+  // Garante que motor e LED iniciem desligados
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, LOW);
+  analogWrite(ENA, 0);
+  digitalWrite(led, LOW);
   // ESP A como MASTER
   if (!SerialBT.begin("ESP_A", true)) {
     Serial.println("Erro ao iniciar Bluetooth!");
@@ -46,8 +65,6 @@ void setup() {
 }
 
 void loop() {
-
-  if (Serial.available()) {
 
     digitalWrite(trigPin, LOW);
     delayMicroseconds(2);
@@ -73,20 +90,38 @@ void loop() {
     // 1. O objeto estiver a menos de 10 cm
     // 2. Ainda não tiver sido detectado anteriormente
     if (distance < 10 && objetoDetectado == false) {
+    // Marca que o objeto já foi detectado
+    // Assim o motor não será acionado novamente
+      objetoDetectado = true;
+
+      // Liga o LED e mantém aceso
+    analogWrite(led, 255);
+    delay(1500);
+    // Define o sentido de rotação do motor
+    digitalWrite(IN1, LOW);
+    digitalWrite(IN2, HIGH);
+
+    // Liga o motor com velocidade 120 (0 a 255)
+    analogWrite(ENA, 120);
+
+    // Mantém o motor ligado por 2 segundos
+    delay(1950);
+
+    // Desliga o motor
+    digitalWrite(IN1, LOW);
+    digitalWrite(IN2, LOW);
+    analogWrite(ENA, 0);
 
       if (SerialBT.connected()) {
         Serial.println(1);
-        String mensagem = "detectado";
+        String mensagem = "1";
         SerialBT.println(mensagem);
 
-        Serial.print("Enviado para ESP B: ");
+        Serial.print("Enviado para ESP B: 1");
         Serial.println(mensagem);
-        // Marca que o objeto já foi detectado
-        // Assim o motor não será acionado novamente
       }
 
       // Pequena pausa antes da próxima leitura
-      delay(100);
+      delay(1000);
     }
-  }
 }
