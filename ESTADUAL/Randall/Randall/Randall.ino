@@ -49,10 +49,10 @@ int distTras;
 
 //===== MPU6050 =====
 
-int ultimoErro = 0;
+float ultimoErro = 0;
 
-int Kp = 15;
-int Kd = 20;
+float Kp = 4.0;
+float Kd = 1.5;
 
 int velocidadeBase = 75;
 
