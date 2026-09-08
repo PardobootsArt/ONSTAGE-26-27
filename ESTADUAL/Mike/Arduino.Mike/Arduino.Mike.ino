@@ -32,7 +32,6 @@ float erroPerspectiva = 0;
 
 int PosicaoOlho = 0;
 
-
 //=====================================================
 // GANHOS DO CONTROLADOR
 //=====================================================
@@ -70,6 +69,10 @@ int enbDF = 13;
 int enbET = 11;
 int enbDT = 10;
 
+bool repTag2=false;
+bool repTag4=false;
+bool repTag5=false;
+
 void setup() {
   Serial.begin(9600);
 
@@ -92,16 +95,42 @@ void setup() {
   vertical.attach(2);
 }
 //braços:
-void levantarBracos() {
+void falarOi() {
 
   direito.attach(4);
   esquerdo.attach(5);
   esquerdo.write(180);
   direito.write(0);
-  delay(500);
-  direito.write(90);
-  esquerdo.write(120);
-  delay(500);
+  for (int i=0; i<3;i++){
+    direito.write(120);
+    delay(200);
+    direito.write(180);
+    delay(200);
+  }
+  direito.write(0);
+}
+void animado() {
+
+  direito.attach(4);
+  esquerdo.attach(5);
+  esquerdo.write(180);
+  direito.write(0);
+  for (int i=0; i<3;i++){
+    direito.write(120);
+    esquerdo.write(90);
+    delay(200);
+    direito.write(180);
+    esquerdo.write(0);
+    delay(200);
+    direito.write(90);
+    esquerdo.write(60);
+    delay(200);
+    direito.write(180);
+    esquerdo.write(0);
+    delay(200);
+  }
+  direito.write(0);
+  esquerdo.write(180);
 }
 void girar(int lado, unsigned long tempo) {
   // lado = 1  -> gira para a direita
@@ -200,7 +229,7 @@ void loop() {
 
     if (tagID == 0) {
 
-      int velocidadeBase = 70;
+      int velocidadeBase = 40;
       // Controle proporcional
 
       Vx = velocidadeBase + (KpDist * erroDistancia);
@@ -248,7 +277,8 @@ void loop() {
       digitalWrite(motorDT2, LOW);
     }
 
-    if (tagID == 2) {
+    if (tagID == 2 && repTag2 == false) {
+      repTag2=true;
       girar(1, 1200);
       delay(500);
     }
@@ -287,9 +317,15 @@ void loop() {
   }
   }
 
-  if (tagID == 4) {
- 
-    
+  if (tagID == 4 && repTag4 ==false) {
+    repTag4=true;
+    falarOi();
+    delay(500);    
+  }
+  if (tagID == 5 && repTag5 ==false) {
+    repTag5=true;
+    animado();
+    delay(500);
   }
 }
 
