@@ -39,6 +39,7 @@ float Kd = 0.05;
 float anguloReferencia = 0;
 float ultimoErro = 0;
 unsigned long ultimoControle = 0;
+float angAtual;
 
 //==============FUNÇÕES DA PROGRAMAÇÃO==========================
 //========================TRONCO===========
@@ -89,8 +90,9 @@ bool varreduraCompleta = false;
 int procurarObjeto() {
   while (true) {
     meuServo.write(posicaoAtual);
+    /*
     int oi = (posicaoAtual * (-2)) + 200;
-    girarTronco(125, oi);
+    girarTronco(125, oi);*/
     delay(15);
 
     int distancia = lerDistancia();
@@ -220,6 +222,7 @@ int motorEF1 = 26;
 int motorEF2 = 28;
 int motorET1 = 22;
 int motorET2 = 24;
+
 int motorDF1 = 34;
 int motorDF2 = 36;
 int motorDT1 = 30;
@@ -292,8 +295,7 @@ void setup() {
 }
 
 float correcao() {
-  float ang = obterAngulo();
-  float erro = anguloReferencia - ang;
+  float erro = obterAngulo();
 
   unsigned long agora = millis();
   float dt = (agora - ultimoControle) / 1000.0;
@@ -322,7 +324,6 @@ void pararMotores() {
 }
 //ok
 void esquerda(int velo, int tempoMs) {
-  anguloReferencia = obterAngulo();
   ultimoErro = 0;
   ultimoControle = millis();
   unsigned long inicio = millis();
@@ -503,6 +504,7 @@ void loop() {
   int distancia = lerDistancia();
   if (distancia > 0 && distancia < 10) {
     if (repeticao == 0) {
+      angAtual = obterAngulo();
       repeticao++;
       delay(5500);
       direita(255, 8000);
