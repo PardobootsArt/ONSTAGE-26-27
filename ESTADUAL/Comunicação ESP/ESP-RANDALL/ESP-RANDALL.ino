@@ -23,6 +23,9 @@ int blue = 0;
 
 bool camuflagemRandall = false;
 
+// Randall só começa quando receber "1" da ESP C
+bool iniciarRandall = false;
+
 // Motores
 int motorE1 = 22;
 int motorE2 = 24;
@@ -79,13 +82,13 @@ void setup() {
   // Monitor Serial do computador
   Serial.begin(115200);
 
-  // Comunicação com a ESP B
+  // Comunicação com a ESP C
   // RX1 = pino 19
   // TX1 = pino 18
   Serial1.begin(9600);
 
   Serial.println("MEGA RANDALL INICIADO");
-  Serial.println("Aguardando sinal da ESP B...");
+  Serial.println("Aguardando sinal da ESP C...");
 
   mpu_begin();
 
@@ -132,7 +135,45 @@ void direcaoMotores(int direcao) {
 
 void loop() {
 
-   mpu_loop();
+  // ===================================================
+  // RECEBE O SINAL DA ESP C
+  // ===================================================
+
+  if (Serial1.available()) {
+
+    String mensagem = Serial1.readStringUntil('\n');
+    mensagem.trim();
+
+    if (mensagem.length() > 0) {
+      Serial.print("Recebido da ESP C: ");
+      Serial.println(mensagem);
+
+      if (mensagem == "1" && !iniciarRandall) {
+        iniciarRandall = true;
+
+        Serial.println("================================");
+        Serial.println("SINAL 1 RECEBIDO!");
+        Serial.println("RANDALL INICIANDO!");
+        Serial.println("================================");
+      }
+    }
+  }
+
+  // ===================================================
+  // ESPERA PELO SINAL PARA COMEÇAR
+  // ===================================================
+
+  if (!iniciarRandall) {
+    analogWrite(enbE, 0);
+    analogWrite(enbD, 0);
+    return;
+  }
+
+  // ===================================================
+  // RANDALL JÁ FOI LIBERADO
+  // ===================================================
+
+  mpu_loop();
 
   // ===================================================
   // JÁ ENCONTROU 3 CORES
@@ -458,22 +499,8 @@ void loop() {
     mpu_reset();
   }
 
-  if (Serial1.available()) {
-    String mensagem = Serial1.readStringUntil('\n');
-    mensagem.trim();
-
-    if (mensagem.length() > 0) {
-      Serial.print("Recebido da ESP B: ");
-      Serial.println(mensagem);
-
-      if (mensagem == "1") {
-        Serial.println("SINAL 1 RECEBIDO PELO RANDALL!");
-
-        // Put Randall action here
-      }
-    }
-  }
 }
+
 void AcenderLed(int R, int G, int B) {
 
   analogWrite(Pin_RED, R);
