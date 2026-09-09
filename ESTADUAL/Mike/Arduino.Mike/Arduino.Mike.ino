@@ -4,18 +4,18 @@ Servo horizontal;
 Servo vertical;
 
 //braços
-Servo direito;   //braço direito
-Servo esquerdo;  //braço esquerdo
+Servo direito;   //braco direito
+Servo esquerdo;  //braco esquerdo
 bool bracosLevantados = false;
 
-// protótipos das funções
+// prototipos das funcoes
 void movimentacaoolho();
 void olho(int vertical2, int horizontal2);
 void levantarBracos();
 void girar(int lado, unsigned long tempo);
 
 //=====================================================
-// VARIÁVEIS RECEBIDAS DO PYTHON
+// VARIAVEIS RECEBIDAS DO PYTHON
 //=====================================================
 
 // ID da Apriltag detectada.
@@ -25,7 +25,7 @@ int tagID = -1;
 // Erro horizontal em pixels.
 float erroX = 0;
 
-// Erro de distância.
+// Erro de distancia.
 float erroDistancia = 0;
 
 float erroPerspectiva = 0;
@@ -36,8 +36,8 @@ int PosicaoOlho = 0;
 // GANHOS DO CONTROLADOR
 //=====================================================
 
-float KpX = 0.4;     // Controle lateral
-float KpDist = 0.6;  // Controle da distância
+float KpX = 0.2;     // Controle lateral
+float KpDist = 0.6;  // Controle da distancia
 float KpPersp = 100;
 
 
@@ -68,10 +68,12 @@ int enbEF = 12;
 int enbDF = 13;
 int enbET = 11;
 int enbDT = 10;
+bool repBraco1 = false;
+bool repBraco2 = false;
 
-bool repTag2=false;
-bool repTag4=false;
-bool repTag5=false;
+bool repTag2 = false;
+bool repTag4 = false;
+bool repTag5 = false;
 
 void setup() {
   Serial.begin(9600);
@@ -94,14 +96,13 @@ void setup() {
   horizontal.attach(3);
   vertical.attach(2);
 }
-//braços:
+//bracos:
 void falarOi() {
-
   direito.attach(4);
   esquerdo.attach(5);
   esquerdo.write(180);
   direito.write(0);
-  for (int i=0; i<3;i++){
+  for (int i = 0; i < 3; i++) {
     direito.write(120);
     delay(200);
     direito.write(180);
@@ -115,7 +116,7 @@ void animado() {
   esquerdo.attach(5);
   esquerdo.write(180);
   direito.write(0);
-  for (int i=0; i<3;i++){
+  for (int i = 0; i < 3; i++) {
     direito.write(120);
     esquerdo.write(90);
     delay(200);
@@ -129,8 +130,6 @@ void animado() {
     esquerdo.write(0);
     delay(200);
   }
-  direito.write(0);
-  esquerdo.write(180);
 }
 void girar(int lado, unsigned long tempo) {
   // lado = 1  -> gira para a direita
@@ -161,7 +160,7 @@ void girar(int lado, unsigned long tempo) {
     // GIRAR PARA A ESQUERDA
     // ==============================
 
-    // Lado esquerdo para trás
+    // Lado esquerdo para tras
     digitalWrite(motorEF1, HIGH);
     digitalWrite(motorEF2, LOW);
 
@@ -187,7 +186,6 @@ void girar(int lado, unsigned long tempo) {
   // ==============================
   // PARA TODOS OS MOTORES
   // ==============================
-
   analogWrite(enbEF, 0);
   analogWrite(enbDF, 0);
   analogWrite(enbET, 0);
@@ -195,7 +193,6 @@ void girar(int lado, unsigned long tempo) {
 }
 
 void loop() {
-
   // erroDistancia já veio do Python
   if (Serial.available()) {
     // Lê uma linha inteira enviada pelo Python
@@ -228,8 +225,8 @@ void loop() {
     }
 
     if (tagID == 0) {
-
       int velocidadeBase = 40;
+      int velocidadeBase = 55;
       // Controle proporcional
 
       Vx = velocidadeBase + (KpDist * erroDistancia);
@@ -260,10 +257,15 @@ void loop() {
 
       digitalWrite(motorDT1, LOW);
       digitalWrite(motorDT2, HIGH);
-      delay(500);
+      delay(100);
     }
 
     if (tagID == -1) {
+
+      analogWrite(enbEF, 0);
+      analogWrite(enbDF, 0);
+      analogWrite(enbET, 0);
+      analogWrite(enbDT, 0);
       digitalWrite(motorEF1, LOW);
       digitalWrite(motorEF2, LOW);
 
@@ -278,68 +280,62 @@ void loop() {
     }
 
     if (tagID == 2 && repTag2 == false) {
-      repTag2=true;
+      repTag2 = true;
       girar(1, 1200);
       delay(500);
     }
-  }
-  if (tagID == 3) {
-    movimentacaoolho();
-    switch (PosicaoOlho) {
-    case 1:
-      olho(0, 90);
-      break;
-    case 2:
-      olho(45, 90);
-      break;
-    case 3:
-      olho(90, 90);
-      break;
-    case 4:
-      olho(0, 50);
-      break;
-    case 5:
-      olho(45, 50);
-      break;
-    case 6:
-      olho(90, 50);
-      break;
-    case 7:
-      olho(0, 30);
-      break;
-    case 8:
-      olho(45, 30);
-      break;
-    case 9:
-      olho(90, 30);
-      break;
 
-  }
-  }
-
-  if (tagID == 4 && repTag4 ==false) {
-    repTag4=true;
-    falarOi();
-    delay(500);    
-  }
-  if (tagID == 5 && repTag5 ==false) {
-    repTag5=true;
-    animado();
-    delay(500);
+    if (tagID == 3) {
+      movimentacaoolho();
+      switch (PosicaoOlho) {
+        case 1:
+          olho(0, 90);
+          break;
+        case 2:
+          olho(45, 90);
+          break;
+        case 3:
+          olho(90, 90);
+          break;
+        case 4:
+          olho(0, 50);
+          break;
+        case 5:
+          olho(45, 50);
+          break;
+        case 6:
+          olho(90, 50);
+          break;
+        case 7:
+          olho(0, 30);
+          break;
+        case 8:
+          olho(45, 30);
+          break;
+        case 9:
+          olho(90, 30);
+          break;
+      }
+    }
+    if (tagID == 4 && repTag4 == false) {
+      repTag4 = true;
+      falarOi();
+      delay(500);
+    }
+    if (tagID == 5 && repTag5 == false) {
+      repTag5 = true;
+      animado();
+      delay(500);
+    }
   }
 }
-
-
 // lado = 1  -> gira para a direita
 // lado = -1 -> gira para a esquerda
-
-
 
 void olho(int vertical2, int horizontal2) {
   vertical.write(vertical2);
   horizontal.write(horizontal2);
 }
-
 void movimentacaoolho() {
   switch (PosicaoOlho) {
     case 1:
