@@ -1,11 +1,8 @@
-// ==========================================================
-// ====================== GIROSCÓPIO ========================
-// ==========================================================
-
+//==============================================================
+//                         GIROSCÓPIO
+//==============================================================
 #include <Wire.h>
-#include <Servo.h>
 
-// MPU6050
 const int MPU = 0x68;
 
 float anguloZ = 0.0;
@@ -13,16 +10,13 @@ unsigned long ultimoTempo;
 
 float offsetGz = 0;
 
-
-// ==========================================================
-// ====================== MOVIMENTAÇÃO ======================
-// ==========================================================
-
+//==============================================================
+//                       MOVIMENTAÇÃO
+//==============================================================
 #define bracoE1 49
 #define bracoE2 47
 #define bracoD1 51
 #define bracoD2 53
-
 #define enbracoD 7
 #define enbracoE 8
 
@@ -35,10 +29,10 @@ float offsetGz = 0;
 
 volatile long degrees;
 
-
-// ==========================================================
-// ========================== RADAR =========================
-// ==========================================================
+//==============================================================
+//                           RADAR
+//==============================================================
+#include <Servo.h>
 
 Servo meuServo;
 
@@ -47,17 +41,12 @@ Servo meuServo;
 
 int posicaoAtual = 25;
 bool sentidoHorario = false;
-
 int contagemObjeto;
 int repeticao;
 
-bool varreduraCompleta = false;
-
-
-// ==========================================================
-// ========================= CORREÇÃO =======================
-// ==========================================================
-
+//==============================================================
+//                         CORREÇÃO
+//==============================================================
 float Kp = 1.2;
 float Kd = 0.05;
 
@@ -66,54 +55,14 @@ float ultimoErro = 0;
 
 unsigned long ultimoControle = 0;
 
+//==============================================================
+//                     CONTROLE DE INÍCIO
+//==============================================================
+bool iniciarRobo = false;
 
-// ==========================================================
-// ========================== MOTORES ========================
-// ==========================================================
-
-int motorEF1 = 26;
-int motorEF2 = 28;
-
-int motorET1 = 22;
-int motorET2 = 24;
-
-int motorDF1 = 34;
-int motorDF2 = 36;
-
-int motorDT1 = 30;
-int motorDT2 = 32;
-
-int enbET = 13;
-int enbEF = 12;
-int enbDT = 11;
-int enbDF = 10;
-
-int servo = 38;
-
-
-// ==========================================================
-// ======================= COMUNICAÇÃO =======================
-// ==========================================================
-//
-// Serial  -> computador
-// Serial1 -> ESP B
-// Serial2 -> comunicação que já existia no Sullivan
-//
-// Mega RX1 = pino 19
-// Mega TX1 = pino 18
-//
-// ESP B TX GPIO 17 -> Mega RX1 pino 19
-// GND ESP B -> GND Mega
-//
-// ==========================================================
-
-bool sinalESP = false;
-
-
-// ==========================================================
-// ======================= TRONCO ============================
-// ==========================================================
-
+//==============================================================
+//                           TRONCO
+//==============================================================
 void countDegrees() {
 
   if (digitalRead(yTronco) == digitalRead(bTronco)) {
@@ -123,7 +72,6 @@ void countDegrees() {
   }
 }
 
-
 void girarTronco(int speed, int anguloo) {
 
   analogWrite(enbtronco, speed);
@@ -131,7 +79,6 @@ void girarTronco(int speed, int anguloo) {
   if (anguloo > degrees) {
 
     while (degrees < anguloo) {
-
       digitalWrite(tronco1, HIGH);
       digitalWrite(tronco2, LOW);
     }
@@ -140,11 +87,9 @@ void girarTronco(int speed, int anguloo) {
     digitalWrite(tronco2, LOW);
   }
 
-
   if (anguloo < degrees) {
 
     while (degrees > anguloo) {
-
       digitalWrite(tronco1, LOW);
       digitalWrite(tronco2, HIGH);
     }
@@ -154,11 +99,9 @@ void girarTronco(int speed, int anguloo) {
   }
 }
 
-
-// ==========================================================
-// ========================= RADAR ===========================
-// ==========================================================
-
+//==============================================================
+//                       ULTRASSÔNICO
+//==============================================================
 int lerDistancia() {
 
   digitalWrite(TRIG, LOW);
@@ -174,6 +117,10 @@ int lerDistancia() {
   return duracao * 0.034 / 2;
 }
 
+//==============================================================
+//                       PROCURAR OBJETO
+//==============================================================
+bool varreduraCompleta = false;
 
 int procurarObjeto() {
 
@@ -189,7 +136,6 @@ int procurarObjeto() {
 
     int distancia = lerDistancia();
 
-
     if (distancia > 0 && distancia < 30) {
 
       delay(150);
@@ -199,7 +145,6 @@ int procurarObjeto() {
       return posicaoAtual;
     }
 
-
     if (sentidoHorario == false) {
 
       posicaoAtual -= 4;
@@ -207,22 +152,17 @@ int procurarObjeto() {
       if (posicaoAtual <= 25) {
 
         posicaoAtual = 25;
-
         sentidoHorario = true;
-
         varreduraCompleta = true;
       }
-    }
 
-
-    else if (sentidoHorario == true) {
+    } else if (sentidoHorario == true) {
 
       posicaoAtual += 4;
 
       if (posicaoAtual >= 145) {
 
         posicaoAtual = 155;
-
         sentidoHorario = false;
       }
     }
@@ -231,7 +171,9 @@ int procurarObjeto() {
   return -1;
 }
 
-
+//==============================================================
+//                           RADAR
+//==============================================================
 void radar() {
 
   int repeticoes = 0;
@@ -246,7 +188,6 @@ void radar() {
 
     delay(15);
 
-
     if (sentidoHorario == false) {
 
       posicaoAtual -= 4;
@@ -254,35 +195,27 @@ void radar() {
       if (posicaoAtual <= 25) {
 
         posicaoAtual = 25;
-
         sentidoHorario = true;
-
         varreduraCompleta = true;
       }
-    }
 
-
-    else if (sentidoHorario == true) {
+    } else if (sentidoHorario == true) {
 
       posicaoAtual += 4;
 
       if (posicaoAtual >= 145) {
 
         posicaoAtual = 155;
-
         sentidoHorario = false;
-
         repeticoes++;
       }
     }
   }
 }
 
-
-// ==========================================================
-// ======================= GIROSCÓPIO ========================
-// ==========================================================
-
+//==============================================================
+//                         GIROSCÓPIO
+//==============================================================
 void iniciarMPU() {
 
   Wire.begin();
@@ -292,17 +225,12 @@ void iniciarMPU() {
   Wire.write(0);
   Wire.endTransmission(true);
 
-
-  // Calibração do giroscópio
-
   long soma = 0;
 
   for (int i = 0; i < 1000; i++) {
 
     Wire.beginTransmission(MPU);
-
     Wire.write(0x47);
-
     Wire.endTransmission(false);
 
     Wire.requestFrom(MPU, 2, true);
@@ -314,7 +242,6 @@ void iniciarMPU() {
     delay(2);
   }
 
-
   offsetGz = soma / 1000.0;
 
   anguloZ = 0;
@@ -322,13 +249,13 @@ void iniciarMPU() {
   ultimoTempo = micros();
 }
 
-
+//==============================================================
+//                       OBTER ÂNGULO
+//==============================================================
 float obterAngulo() {
 
   Wire.beginTransmission(MPU);
-
   Wire.write(0x47);
-
   Wire.endTransmission(false);
 
   Wire.requestFrom(MPU, 2, true);
@@ -345,72 +272,73 @@ float obterAngulo() {
 
   anguloZ += velocidadeAngular * dt;
 
-
-  while (anguloZ >= 360) {
+  while (anguloZ >= 360)
     anguloZ -= 360;
-  }
 
-
-  while (anguloZ < 0) {
+  while (anguloZ < 0)
     anguloZ += 360;
-  }
-
-
-  // Converte para -180 até +180
 
   float anguloCorrigido = anguloZ;
 
-  if (anguloCorrigido > 180) {
+  if (anguloCorrigido > 180)
     anguloCorrigido -= 360;
-  }
 
   return anguloCorrigido;
 }
 
+//==============================================================
+//                           MOTORES
+//==============================================================
+int motorEF1 = 26;
+int motorEF2 = 28;
 
-// ==========================================================
-// ======================== SETUP ============================
-// ==========================================================
+int motorET1 = 22;
+int motorET2 = 24;
 
+int motorDF1 = 34;
+int motorDF2 = 36;
+
+int motorDT1 = 30;
+int motorDT2 = 32;
+
+int enbET = 13;
+int enbEF = 12;
+
+int enbDT = 11;
+int enbDF = 10;
+
+int servo = 38;
+
+//==============================================================
+//                            SETUP
+//==============================================================
 void setup() {
 
-  // ========================================================
+  //============================================================
   // COMUNICAÇÃO
-  // ========================================================
+  //============================================================
 
-  // Monitor Serial do computador
   Serial.begin(115200);
 
-  // Comunicação com ESP B
-  // RX1 = 19
-  // TX1 = 18
+  // ESP B -> Mega
+  // ESP B TX = GPIO 17
+  // Mega RX1 = pino 19
   Serial1.begin(9600);
 
-  // Comunicação que já existia
+  // Serial2 original
   Serial2.begin(115200);
 
-
-  Serial.println();
-  Serial.println("=================================");
-  Serial.println("       SULLIVAN INICIADO");
-  Serial.println("=================================");
-
-  Serial.println("Inicializando comunicacao...");
-  Serial.println("Aguardando ESP B...");
-
-
-  // ========================================================
+  //============================================================
   // GIROSCÓPIO
-  // ========================================================
+  //============================================================
 
   iniciarMPU();
 
   Serial.println("MPU pronto!");
 
-
-  // ========================================================
+  //============================================================
   // MOVIMENTAÇÃO
-  // ========================================================
+  //============================================================
 
   pinMode(bracoE1, OUTPUT);
   pinMode(bracoE2, OUTPUT);
@@ -421,12 +349,10 @@ void setup() {
   pinMode(enbracoD, OUTPUT);
   pinMode(enbracoE, OUTPUT);
 
-
   pinMode(tronco1, OUTPUT);
   pinMode(tronco2, OUTPUT);
 
   pinMode(enbtronco, OUTPUT);
-
 
   pinMode(yTronco, INPUT);
   pinMode(bTronco, INPUT);
@@ -441,14 +367,12 @@ void setup() {
 
   analogWrite(enbtronco, 100);
 
-
-  // ========================================================
+  //============================================================
   // RADAR
-  // ========================================================
+  //============================================================
 
   pinMode(TRIG, OUTPUT);
   pinMode(ECHO, INPUT);
-
 
   meuServo.attach(servo);
 
@@ -456,10 +380,9 @@ void setup() {
 
   delay(300);
 
-
-  // ========================================================
+  //============================================================
   // MOTORES
-  // ========================================================
+  //============================================================
 
   pinMode(motorEF1, OUTPUT);
   pinMode(motorEF2, OUTPUT);
@@ -473,36 +396,35 @@ void setup() {
   pinMode(motorDT1, OUTPUT);
   pinMode(motorDT2, OUTPUT);
 
-
   pinMode(enbEF, OUTPUT);
   pinMode(enbDF, OUTPUT);
 
   pinMode(enbET, OUTPUT);
   pinMode(enbDT, OUTPUT);
 
-
   pinMode(20, INPUT);
   pinMode(21, INPUT);
 
-
   contagemObjeto = 0;
-
   repeticao = 0;
-
 
   analogWrite(enbtronco, 175);
 
   delay(150);
 
+  // Garante que começa parado
+  pararMotores();
 
-  Serial.println("Sullivan pronto!");
+  Serial.println("=================================");
+  Serial.println("SULLIVAN PRONTO!");
+  Serial.println("Aguardando ESP B...");
+  Serial.println("Plano B: ultrassonico < 10 cm");
+  Serial.println("=================================");
 }
 
-
-// ==========================================================
-// ========================= CORREÇÃO ========================
-// ==========================================================
-
+//==============================================================
+//                         CORREÇÃO
+//==============================================================
 float correcao() {
 
   float ang = obterAngulo();
@@ -513,33 +435,27 @@ float correcao() {
 
   float dt = (agora - ultimoControle) / 1000.0;
 
-  if (dt <= 0) {
+  if (dt <= 0)
     dt = 0.001;
-  }
-
 
   float deriv = (erro - ultimoErro) / dt;
 
   ultimoErro = erro;
-
   ultimoControle = agora;
-
 
   return Kp * erro + Kd * deriv;
 }
 
-
-// ==========================================================
-// ====================== PARAR MOTORES =====================
-// ==========================================================
-
+//==============================================================
+//                       PARAR MOTORES
+//==============================================================
 void pararMotores() {
 
   analogWrite(enbEF, 0);
   analogWrite(enbDF, 0);
+
   analogWrite(enbET, 0);
   analogWrite(enbDT, 0);
-
 
   digitalWrite(motorEF1, LOW);
   digitalWrite(motorEF2, LOW);
@@ -554,41 +470,33 @@ void pararMotores() {
   digitalWrite(motorDT2, LOW);
 }
 
-
-// ==========================================================
-// ========================== ESQUERDA ======================
-// ==========================================================
-
+//==============================================================
+//                           ESQUERDA
+//==============================================================
 void esquerda(int velo, int tempoMs) {
 
   anguloReferencia = obterAngulo();
 
   ultimoErro = 0;
-
   ultimoControle = millis();
 
   unsigned long inicio = millis();
-
 
   while (millis() - inicio < tempoMs) {
 
     float c = correcao();
 
     float velDir = velo + c;
-
     float velEsq = velo - c;
-
 
     velEsq = constrain(velEsq, 0, 255);
     velDir = constrain(velDir, 0, 255);
-
 
     analogWrite(enbEF, velEsq);
     analogWrite(enbDF, velEsq);
 
     analogWrite(enbET, velDir);
     analogWrite(enbDT, velDir);
-
 
     digitalWrite(motorEF1, HIGH);
     digitalWrite(motorEF2, LOW);
@@ -603,45 +511,36 @@ void esquerda(int velo, int tempoMs) {
     digitalWrite(motorDT2, HIGH);
   }
 
-
   pararMotores();
 }
 
-
-// ==========================================================
-// ========================== DIREITA ========================
-// ==========================================================
-
+//==============================================================
+//                           DIREITA
+//==============================================================
 void direita(int velo, int tempoMs) {
 
   anguloReferencia = obterAngulo();
 
   ultimoErro = 0;
-
   ultimoControle = millis();
 
   unsigned long inicio = millis();
-
 
   while (millis() - inicio < tempoMs) {
 
     float c = correcao();
 
     float velDir = velo - c;
-
     float velEsq = velo + c;
-
 
     velEsq = constrain(velEsq, 0, 255);
     velDir = constrain(velDir, 0, 255);
-
 
     analogWrite(enbEF, velEsq);
     analogWrite(enbDF, velEsq);
 
     analogWrite(enbET, velDir);
     analogWrite(enbDT, velDir);
-
 
     digitalWrite(motorEF1, LOW);
     digitalWrite(motorEF2, HIGH);
@@ -656,45 +555,36 @@ void direita(int velo, int tempoMs) {
     digitalWrite(motorDT2, LOW);
   }
 
-
   pararMotores();
 }
 
-
-// ==========================================================
-// =========================== FRENTE ========================
-// ==========================================================
-
+//==============================================================
+//                            FRENTE
+//==============================================================
 void frente(int velo, int tempoMs) {
 
   anguloReferencia = obterAngulo();
 
   ultimoErro = 0;
-
   ultimoControle = millis();
 
   unsigned long inicio = millis();
-
 
   while (millis() - inicio < tempoMs) {
 
     float c = correcao();
 
-    float velDir = velo + c;
-
-    float velEsq = velo - c;
-
+    float velDir = velo - c;
+    float velEsq = velo + c;
 
     velEsq = constrain(velEsq, 0, 255);
     velDir = constrain(velDir, 0, 255);
-
 
     analogWrite(enbEF, velEsq);
     analogWrite(enbDF, velDir);
 
     analogWrite(enbET, velEsq);
     analogWrite(enbDT, velDir);
-
 
     digitalWrite(motorEF1, LOW);
     digitalWrite(motorEF2, HIGH);
@@ -709,45 +599,36 @@ void frente(int velo, int tempoMs) {
     digitalWrite(motorDT2, LOW);
   }
 
-
   pararMotores();
 }
 
-
-// ==========================================================
-// ============================ TRÁS =========================
-// ==========================================================
-
+//==============================================================
+//                             TRÁS
+//==============================================================
 void tras(int velo, int tempoMs) {
 
   anguloReferencia = obterAngulo();
 
   ultimoErro = 0;
-
   ultimoControle = millis();
 
   unsigned long inicio = millis();
-
 
   while (millis() - inicio < tempoMs) {
 
     float c = correcao();
 
-    float velDir = velo + c;
-
-    float velEsq = velo - c;
-
+    float velDir = velo - c;
+    float velEsq = velo + c;
 
     velEsq = constrain(velEsq, 0, 255);
     velDir = constrain(velDir, 0, 255);
-
 
     analogWrite(enbEF, velEsq);
     analogWrite(enbDF, velDir);
 
     analogWrite(enbET, velEsq);
     analogWrite(enbDT, velDir);
-
 
     digitalWrite(motorEF2, LOW);
     digitalWrite(motorEF1, HIGH);
@@ -762,15 +643,12 @@ void tras(int velo, int tempoMs) {
     digitalWrite(motorDT1, LOW);
   }
 
-
   pararMotores();
 }
 
-
-// ==========================================================
-// ====================== CALCULAR TEMPO ====================
-// ==========================================================
-
+//==============================================================
+//                     CALCULAR TEMPO
+//==============================================================
 int calcularTempo(int angulo) {
 
   int erro = abs(angulo - 90);
@@ -784,11 +662,9 @@ int calcularTempo(int angulo) {
   return tempo;
 }
 
-
-// ==========================================================
-// ====================== FRENTE LIVRE =======================
-// ==========================================================
-
+//==============================================================
+//                       FRENTE LIVRE
+//==============================================================
 bool frenteLivre() {
 
   meuServo.write(90);
@@ -797,21 +673,16 @@ bool frenteLivre() {
 
   int distancia = lerDistancia();
 
-
   if (distancia > 20 || distancia == 0) {
-
     return true;
   }
-
 
   return false;
 }
 
-
-// ==========================================================
-// ====================== COMUNICAÇÃO ESP B =================
-// ==========================================================
-
+//==============================================================
+//                  VERIFICAR ESP B
+//==============================================================
 void verificarESP() {
 
   if (Serial1.available()) {
@@ -820,187 +691,210 @@ void verificarESP() {
 
     mensagem.trim();
 
-
     if (mensagem.length() > 0) {
 
       Serial.print("Recebido da ESP B: ");
       Serial.println(mensagem);
 
-
       if (mensagem == "1") {
 
         Serial.println("=================================");
-        Serial.println("SINAL 1 RECEBIDO PELO SULLIVAN!");
+        Serial.println("SINAL 1 RECEBIDO!");
+        Serial.println("INICIANDO SULLIVAN!");
         Serial.println("=================================");
 
-        sinalESP = true;
+        iniciarRobo = true;
       }
     }
   }
 }
 
-
-// ==========================================================
-// =========================== LOOP ==========================
-// ==========================================================
-
+//==============================================================
+//                            LOOP
+//==============================================================
 void loop() {
 
-  // ========================================================
-  // VERIFICA SE CHEGOU SINAL DA ESP B
-  // ========================================================
+  //============================================================
+  // PRIMEIRO: VERIFICA O BLUETOOTH / ESP B
+  //============================================================
 
   verificarESP();
 
+  //============================================================
+  // SE AINDA NÃO INICIOU:
+  //
+  // USA O ULTRASSÔNICO COMO PLANO B
+  //============================================================
 
-  // ========================================================
-  // RADAR / SENSOR
-  // ========================================================
+  if (!iniciarRobo) {
 
-  int distancia = lerDistancia();
+    int distanciaInicial = lerDistancia();
 
+    if (distanciaInicial > 0 && distanciaInicial < 10) {
 
-  if (distancia > 0 && distancia < 10) {
+      Serial.println("=================================");
+      Serial.println("PLANO B ATIVADO!");
+      Serial.println("ULTRASSONICO < 10 CM");
+      Serial.println("INICIANDO SULLIVAN!");
+      Serial.println("=================================");
 
-    if (repeticao == 0) {
+      iniciarRobo = true;
+    }
+    else {
 
-      repeticao++;
-
-
-      delay(5500);
-
-
-      // Vira para a direita
-      direita(255, 8000);
-
+      // Continua parado esperando
       pararMotores();
 
-      delay(500);
+      return;
+    }
+  }
 
+  //============================================================
+  // A PARTIR DAQUI:
+  //
+  // O ROBÔ JÁ FOI LIBERADO PELO:
+  //
+  // 1 -> ESP B
+  //
+  // OU
+  //
+  // < 10 cm -> ULTRASSÔNICO
+  //
+  // NÃO PRECISA MAIS DO ULTRASSÔNICO PARA LIBERAR A SEQUÊNCIA.
+  //============================================================
 
-      // Anda para frente
-      frente(255, 1000);
+  if (repeticao == 0) {
 
-      delay(1000);
+    repeticao++;
 
+    //==========================================================
+    // ESPERA INICIAL
+    //==========================================================
 
-      // Procura objetos
-      while (contagemObjeto < 2) {
+    delay(5500);
 
-        int grauss = procurarObjeto();
+    //==========================================================
+    // GIRO PARA DIREITA
+    //==========================================================
 
-        int tempo = (calcularTempo(grauss)) * 50;
+    direita(255, 8000);
 
+    pararMotores();
 
-        if (grauss != -1) {
+    delay(500);
 
-          // =================================================
-          // OBJETO À ESQUERDA
-          // =================================================
+    //==========================================================
+    // FRENTE
+    //==========================================================
 
-          if (grauss > 90) {
+    frente(255, 1000);
 
-            contagemObjeto++;
+    delay(1000);
 
+    //==========================================================
+    // PROCURA OS OBJETOS
+    //==========================================================
 
-            direita(165, tempo);
+    while (contagemObjeto < 2) {
+
+      int grauss = procurarObjeto();
+
+      int tempo = (calcularTempo(grauss)) * 50;
+
+      if (grauss != -1) {
+
+        //======================================================
+        // OBJETO NA ESQUERDA
+        // IR PARA DIREITA
+        //======================================================
+
+        if (grauss > 90) {
+
+          contagemObjeto++;
+
+          direita(165, tempo);
+
+          pararMotores();
+
+          delay(200);
+
+          Serial.println(tempo);
+
+          if (frenteLivre() == true) {
+
+            frente(255, 4500);
 
             pararMotores();
-
-            delay(200);
-
-            Serial.println(tempo);
-
-
-            if (frenteLivre() == true) {
-
-              frente(255, 4500);
-
-              pararMotores();
-            }
-          }
-
-
-          // =================================================
-          // OBJETO À DIREITA
-          // =================================================
-
-          if (grauss < 90) {
-
-            contagemObjeto++;
-
-
-            esquerda(165, tempo);
-
-            pararMotores();
-
-            delay(200);
-
-            Serial.println(tempo);
-
-
-            if (frenteLivre() == true) {
-
-              frente(255, 4500);
-
-              pararMotores();
-            }
           }
         }
 
+        //======================================================
+        // OBJETO NA DIREITA
+        // IR PARA ESQUERDA
+        //======================================================
 
-        // ===================================================
-        // VARREDURA COMPLETA
-        // ===================================================
+        if (grauss < 90) {
 
-        else if (varreduraCompleta) {
+          contagemObjeto++;
 
-          frente(110, 200);
+          esquerda(165, tempo);
 
-          varreduraCompleta = false;
+          pararMotores();
+
+          delay(200);
+
+          Serial.println(tempo);
+
+          if (frenteLivre() == true) {
+
+            frente(255, 4500);
+
+            pararMotores();
+          }
         }
+
+      } else if (varreduraCompleta) {
+
+        frente(110, 200);
+
+        varreduraCompleta = false;
       }
+    }
 
+    //==========================================================
+    // ESPERA
+    //==========================================================
 
-      delay(2000);
+    delay(2000);
 
+    //==========================================================
+    // BRAÇOS
+    //==========================================================
 
-      // =====================================================
-      // BRAÇOS
-      // =====================================================
+    while (contagemObjeto > 1) {
 
-      while (contagemObjeto > 1) {
+      int distancia = lerDistancia();
 
-        int distancia = lerDistancia();
+      if (distancia > 0 && distancia < 15) {
 
+        analogWrite(enbracoE, 120);
+        analogWrite(enbracoD, 120);
 
-        if (distancia > 0 && distancia < 15) {
+        digitalWrite(bracoE1, HIGH);
+        digitalWrite(bracoE2, LOW);
 
-          analogWrite(enbracoE, 120);
+        digitalWrite(bracoD1, HIGH);
+        digitalWrite(bracoD2, LOW);
 
-          analogWrite(enbracoD, 120);
+        delay(450);
 
+        digitalWrite(bracoE1, LOW);
+        digitalWrite(bracoE2, LOW);
 
-          digitalWrite(bracoE1, HIGH);
-          digitalWrite(bracoE2, LOW);
+        delay(50);
 
-
-          digitalWrite(bracoD1, HIGH);
-          digitalWrite(bracoD2, LOW);
-
-
-          delay(450);
-
-
-          digitalWrite(bracoE1, LOW);
-          digitalWrite(bracoE2, LOW);
-
-          delay(50);
-
-
-          digitalWrite(bracoD1, LOW);
-          digitalWrite(bracoD2, LOW);
-        }
+        digitalWrite(bracoD1, LOW);
+        digitalWrite(bracoD2, LOW);
       }
     }
   }
