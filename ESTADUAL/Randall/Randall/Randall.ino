@@ -6,7 +6,7 @@ Adafruit_TCS34725 tcs = Adafruit_TCS34725(
   TCS34725_INTEGRATIONTIME_300MS,
   TCS34725_GAIN_1X);
 
-#include "mpu6050.h"
+//#include "mpu6050.h"
 
 //===== PINOS =====
 
@@ -130,6 +130,67 @@ int calDistanciaT() {
   return distTras;
 }
 
+void iniciarMPU() {
+  Wire.begin();
+
+  Wire.beginTransmission(MPU);
+  Wire.write(0x6B);
+  Wire.write(0);
+  Wire.endTransmission(true);
+
+  // Calibração do giroscópio
+  long soma = 0;
+
+  for (int i = 0; i < 1000; i++) {
+    Wire.beginTransmission(MPU);
+    Wire.write(0x47);  // GyZ
+    Wire.endTransmission(false);
+    Wire.requestFrom(MPU, 2, true);
+
+    int16_t Gz = Wire.read() << 8 | Wire.read();
+
+    soma += Gz;
+    delay(2);
+  }
+
+  offsetGz = soma / 1000.0;
+
+  anguloZ = 0;
+  ultimoTempo = micros();
+}
+
+float obterAngulo() {
+
+  Wire.beginTransmission(MPU);
+  Wire.write(0x47);
+  Wire.endTransmission(false);
+  Wire.requestFrom(MPU, 2, true);
+
+  int16_t Gz = Wire.read() << 8 | Wire.read();
+
+  float velocidadeAngular = (Gz - offsetGz) / 131.0;
+
+  unsigned long agora = micros();
+  float dt = (agora - ultimoTempo) / 1000000.0;
+  ultimoTempo = agora;
+
+  anguloZ += velocidadeAngular * dt;
+
+  while (anguloZ >= 360)
+    anguloZ -= 360;
+
+  while (anguloZ < 0)
+    anguloZ += 360;
+
+
+  // Converte para -180 a +180
+  float anguloCorrigido = anguloZ;
+
+  if (anguloCorrigido > 180)
+    anguloCorrigido -= 360;
+
+  return anguloCorrigido;
+}
 
 // =====================================================
 // SETUP
@@ -289,7 +350,7 @@ void loop() {
     float correcaoP = Kp * erro;
     float correcaoD = Kd * (ultimoErro - erro);
     float correcaoFinal = correcaoP + correcaoD;
-    float velEsq = (velocidadeBase +10) + correcaoFinal ;
+    float velEsq = (velocidadeBase + 10) + correcaoFinal ;
     float velDir = velocidadeBase - correcaoFinal;
     velEsq = constrain(velEsq, 0, 255);
     velDir = constrain(velDir, 0, 255);
