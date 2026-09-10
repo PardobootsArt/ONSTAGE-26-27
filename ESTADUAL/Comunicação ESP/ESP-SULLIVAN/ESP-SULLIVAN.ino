@@ -33,6 +33,9 @@ bool sentidoHorario = false;
 int contagemObjeto;
 int repeticao;
 
+// Controle de inicio pelo ESP B
+bool iniciarRobo = false;
+
 //===========CORREÇÃO===========
 float Kp = 1.2;
 float Kd = 0.05;
@@ -124,7 +127,7 @@ int procurarObjeto() {
 }
 
 void radar() {
-  int repeticoes = 0;
+  int repeticoes;
   while (repeticoes < 4) {
     meuServo.write(posicaoAtual);
     int oi = (posicaoAtual * (-2)) + 200;
@@ -235,13 +238,9 @@ int servo = 38;
 void setup() {
   //COMUNICAÇÃO
   Serial.begin(115200);
-
-  // ESP B <-> Mega 1
-  // RX1 = 19, TX1 = 18
-  Serial1.begin(9600);
-
-  // Comunicacao original do Sullivan
   Serial2.begin(115200);
+  Serial1.begin(9600);
+  Serial.println("Aguardando sinal da ESP B...");
 
   iniciarMPU();
   Serial.println("MPU pronto!");
@@ -505,35 +504,26 @@ bool frenteLivre() {
   return false;  // Ainda há obstáculo
 }
 
-bool iniciarRobo = false;
-
 void verificarESP() {
   if (Serial1.available()) {
     String mensagem = Serial1.readStringUntil('\n');
     mensagem.trim();
-
-    Serial.print("Recebido da ESP B: ");
-    Serial.println(mensagem);
-
     if (mensagem == "1") {
       iniciarRobo = true;
-      Serial.println("SINAL 1 RECEBIDO! Sullivan iniciado pela ESP B.");
+      Serial.println("SINAL 1 RECEBIDO DA ESP B - SULLIVAN INICIANDO!");
     }
   }
 }
 
 void loop() {
-  // Primeiro tenta iniciar pelo sinal da ESP B.
   verificarESP();
 
-  // Se o Bluetooth/ESP A falhar, o ultrassonico continua como plano B.
-  // Depois que iniciar, esta condicao nao e mais exigida.
+  // O ultrassonico continua sendo uma forma alternativa de iniciar.
   if (!iniciarRobo) {
     int distanciaInicial = lerDistancia();
-
     if (distanciaInicial > 0 && distanciaInicial < 10) {
       iniciarRobo = true;
-      Serial.println("Sullivan iniciado pelo ultrassonico (plano B).");
+      Serial.println("OBJETO < 10 CM - SULLIVAN INICIANDO!");
     } else {
       pararMotores();
       return;
@@ -541,6 +531,7 @@ void loop() {
   }
 
   if (repeticao == 0) {
+    if (repeticao == 0) {
       repeticao++;
       delay(5500);
       direita(255, 8000);
@@ -584,12 +575,9 @@ void loop() {
         }
       }
 
-      // Foram encontrados os 2 objetos.
-      // Para garantir que o Sullivan esta parado antes do sinal:
       pararMotores();
       Serial1.println("2");
-      Serial.println("2 OBJETOS ENCONTRADOS!");
-      Serial.println("SINAL 2 ENVIADO PARA ESP B!");
+      Serial.println("2 OBJETOS ENCONTRADOS - SINAL 2 ENVIADO PARA ESP B!");
 
       delay(2000);
       while (contagemObjeto > 1) {
@@ -611,4 +599,3 @@ void loop() {
       }
     }
   }
-}
