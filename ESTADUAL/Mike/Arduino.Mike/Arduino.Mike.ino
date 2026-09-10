@@ -27,6 +27,20 @@ float erroX = 0;
 
 // Erro de distancia.
 float erroDistancia = 0;
+2728293031323334353637383940414243444546474849505152535455565758596061626364
+// ID da Apriltag detectada.
+// Se for -1 significa que nenhuma tag foi encontrada.
+int tagID = -1;
+
+// Erro horizontal em pixels.
+float erroX = 0;
+
+// Erro de distancia.
+float erroDistancia = 0;
+
+
+
+
 
 float erroPerspectiva = 0;
 

@@ -4,8 +4,7 @@
 // Criação do objeto para o sensor TCS34725
 Adafruit_TCS34725 tcs = Adafruit_TCS34725(
   TCS34725_INTEGRATIONTIME_300MS,
-  TCS34725_GAIN_1X
-);
+  TCS34725_GAIN_1X);
 
 #include "mpu6050.h"
 
@@ -51,10 +50,10 @@ int distTras;
 
 int ultimoErro = 0;
 
-int Kp = 15;
-int Kd = 20;
+int Kp = 4;
+int Kd = 1;
 
-int velocidadeBase = 75;
+int velocidadeBase = 70;
 
 //===== CORES =====
 
@@ -70,6 +69,67 @@ bool encontrouTresCores = false;
 
 int a;
 
+// =====================================================
+// LED RGB
+// =====================================================
+
+void AcenderLed(int R, int G, int B) {
+  analogWrite(Pin_RED, R);
+  analogWrite(Pin_GREEN, G);
+  analogWrite(Pin_BLUE, B);
+}
+
+// =====================================================
+// ULTRASSÔNICO DA FRENTE
+// =====================================================
+
+int calDistanciaF() {
+
+  digitalWrite(trigPin, LOW);
+
+  delayMicroseconds(2);
+
+  digitalWrite(trigPin, HIGH);
+
+  delayMicroseconds(10);
+
+  digitalWrite(trigPin, LOW);
+
+  durationF = pulseIn(echoPin, HIGH);
+
+  distFrente = durationF * 0.034 / 2;
+
+  delay(30);
+
+  return distFrente;
+}
+
+
+// =====================================================
+// ULTRASSÔNICO DE TRÁS
+// =====================================================
+
+int calDistanciaT() {
+
+  digitalWrite(trigPin2, LOW);
+
+  delayMicroseconds(2);
+
+  digitalWrite(trigPin2, HIGH);
+
+  delayMicroseconds(10);
+
+  digitalWrite(trigPin2, LOW);
+
+  durationT = pulseIn(echoPin2, HIGH);
+
+  distTras = durationT * 0.034 / 2;
+
+  delay(30);
+
+  return distTras;
+}
+
 
 // =====================================================
 // SETUP
@@ -81,14 +141,10 @@ void setup() {
 
   // Inicializa o sensor TCS34725
   if (!tcs.begin()) {
-
-    Serial.println(
-      "Não foi possível encontrar o TCS34725. "
-      "Verifique as conexões!"
-    );
-
-    while (1);
-  }
+    Serial.println("Não foi possível encontrar o TCS34725. Verifique as conexões!");
+    while (1)
+      ;
+  };
 
   Serial.println("Sensor TCS34725 inicializado.\n");
 
@@ -186,14 +242,21 @@ void direcaoMotores(int direcao) {
 // =====================================================
 // LOOP
 // =====================================================
-
+float referencia;
 void loop() {
 
   mpu_loop();
 
+  uint16_t r, g, b, c;
+
+  tcs.getRawData(&r, &g, &b, &c);
+  red = r;
+  green = g;
+  blue = b;
   // ===================================================
   // JÁ ENCONTROU 3 CORES
   // ===================================================
+
 
   if (encontrouTresCores) {
 
@@ -202,7 +265,6 @@ void loop() {
 
     return;
   }
-
 
   // ===================================================
   // PRIMEIRA PARTE
@@ -213,19 +275,9 @@ void loop() {
 
     direcaoMotores(1);
 
-
     // =================================================
     // LEITURA DO SENSOR DE COR
     // =================================================
-
-    uint16_t r, g, b, c;
-
-    tcs.getRawData(&r, &g, &b, &c);
-
-    red = r;
-    green = g;
-    blue = b;
-
 
     // =================================================
     // CORREÇÃO MPU6050
@@ -234,20 +286,15 @@ void loop() {
 
     int erro = getAngleZ();
 
-    int correcaoP = Kp * erro;
-
-    int correcaoD = Kd * (ultimoErro - erro);
-
-    int correcaoFinal = correcaoP + correcaoD;
-
-    int velEsq = velocidadeBase + correcaoFinal;
-
-    int velDir = velocidadeBase - correcaoFinal;
-
+    float correcaoP = Kp * erro;
+    float correcaoD = Kd * (ultimoErro - erro);
+    float correcaoFinal = correcaoP + correcaoD;
+    float velEsq = (velocidadeBase +10) + correcaoFinal ;
+    float velDir = velocidadeBase - correcaoFinal;
     velEsq = constrain(velEsq, 0, 255);
     velDir = constrain(velDir, 0, 255);
 
-    analogWrite(enbE, velEsq);
+    analogWrite(enbE, velEsq );
     analogWrite(enbD, velDir);
 
     ultimoErro = erro;
@@ -257,18 +304,26 @@ void loop() {
     // SERIAL
     // =================================================
 
-    Serial.print("VelE: ");
+    Serial.print(" error ");
+    Serial.println(erro);
+    Serial.print(" velE ");
     Serial.print(velEsq);
-
-    Serial.print(" | VelD: ");
+    Serial.print(" velD ");
     Serial.println(velDir);
-
+    /*
+    Serial.print("red: ");
+    Serial.print(red);
+    Serial.print(" green: ");
+    Serial.print(green);
+    Serial.print(" blue ");
+    Serial.println(blue);
+    */
 
     // =================================================
     // DETECÇÃO DO PRETO
     // =================================================
 
-    if (green > 500 && red > 500 && blue > 400) {
+    if (green < 450 && red < 550 && blue < 300) {
 
       Serial.println("PRETO DETECTADO");
 
@@ -286,7 +341,7 @@ void loop() {
       direcaoMotores(-1);
 
       delay(1000);
-
+      direcaoMotores(1);
       analogWrite(enbE, 165);
       analogWrite(enbD, 210);
 
@@ -295,15 +350,12 @@ void loop() {
 
       digitalWrite(motorD1, LOW);
       digitalWrite(motorD2, HIGH);
-
       delay(950);
-
       direcaoMotores(-1);
 
       delay(2000);
     }
   }
-
 
   // ===================================================
   // SEGUNDA PARTE
@@ -318,40 +370,27 @@ void loop() {
 
     direcaoMotores(1);
 
-
-    // =================================================
-    // ULTRASSÔNICOS
-    // =================================================
-
-    distFrente = calDistanciaF() + 2;
-
-    distTras = calDistanciaT();
-
-
     // =================================================
     // CORREÇÃO DOS MOTORES
     // =================================================
 
-    int erro = distFrente - distTras;
+    int distF = calDistanciaF();
+    int distT = calDistanciaT();
+
+    int erro = distF - distT;
 
     int correcaoP = Kp * erro;
-
     int correcaoD = Kd * (ultimoErro - erro);
-
     int correcaoFinal = correcaoP + correcaoD;
-
-    int velEsq = velocidadeBase + correcaoFinal;
-
-    int velDir = velocidadeBase - correcaoFinal;
-
+    int velEsq = velocidadeBase - correcaoFinal;
+    int velDir = velocidadeBase + correcaoFinal;
     velEsq = constrain(velEsq, 0, 255);
     velDir = constrain(velDir, 0, 255);
 
     analogWrite(enbE, velEsq);
-    analogWrite(enbD, velDir + 5);
+    analogWrite(enbD, velDir);
 
     ultimoErro = erro;
-
 
     // =================================================
     // SENSOR DE COR
@@ -381,22 +420,18 @@ void loop() {
 
 
     Serial.print("Quantidade de Cores: ");
-    Serial.println(quantidadeCores);
+    Serial.print(quantidadeCores);
 
-
-    Serial.print("Ultra Frente: ");
-    Serial.print(distFrente);
-
-    Serial.print(" | Ultra Tras: ");
-    Serial.println(distTras);
+    Serial.print(" | erro: ");
+    Serial.println(erro);
 
 
     // =================================================
     // CLASSIFICAÇÃO DAS CORES
     // =================================================
 
-  
-    if (red < 90 && green < 90 && blue < 90) {
+
+    if (r > 3400 && r < 4000 && g > 2700 && g < 3100 && b > 1300 && b < 2000) {
 
       corAtual = 1;
 
@@ -405,7 +440,7 @@ void loop() {
       AcenderLed(150, 0, 255);
     }
 
-    else if (r > 2200 &&  r < 6500 &&  g > 1500 &&  g < 5200 &&  b > 500 && b < 2000) {
+    else if (r > 3750 && r < 5000 && g > 2000 && g < 5200 && b > 500 && b < 2000) {
 
       corAtual = 2;
 
@@ -414,7 +449,7 @@ void loop() {
       AcenderLed(255, 130, 0);
     }
 
-    else if (r > 2000 && r < 4000 &&  g > 600 && g < 800 && b > 500 && b < 700 ) {
+    else if (r > 2000 && r < 4000 && g > 600 && g < 1500 && b > 500 && b < 1200) {
 
       corAtual = 3;
 
@@ -423,7 +458,7 @@ void loop() {
       AcenderLed(255, 0, 175);
     }
 
-    else if (r > 600 && r < 1200 && g > 1000 && g < 2200 && b > 800 && b < 1500 ) {
+    else if (r > 600 && r < 2000 && g > 1500 && g < 3000 && b > 1300 && b < 2200) {
 
       corAtual = 4;
 
@@ -431,14 +466,10 @@ void loop() {
 
       AcenderLed(64, 224, 208);
     }
-
-
     // NENHUMA COR
     else {
-
       corAtual = 0;
     }
-
 
     // =================================================
     // CONFIRMAÇÃO DA COR
@@ -459,7 +490,7 @@ void loop() {
 
 
       // Confirma após 10 leituras
-      if (contadorLeituras >= 10) {
+      if (contadorLeituras >= 5) {
 
         // Só conta se for diferente da última cor
         if (corEmConfirmacao != ultimaCor) {
@@ -469,8 +500,7 @@ void loop() {
           ultimaCor = corEmConfirmacao;
 
           Serial.print(
-            "NOVA FILEIRA CONFIRMADA! Quantidade: "
-          );
+            "NOVA FILEIRA CONFIRMADA! Quantidade: ");
 
           Serial.println(quantidadeCores);
         }
@@ -497,73 +527,7 @@ void loop() {
       analogWrite(enbD, 0);
 
       Serial.println(
-        "3 CORES DETECTADAS - PARANDO!"
-      );
+        "3 CORES DETECTADAS - PARANDO!");
     }
   }
 }
-
-
-// =====================================================
-// LED RGB
-// =====================================================
-
-void AcenderLed(int R, int G, int B) {
-
-  analogWrite(Pin_RED, R);
-  analogWrite(Pin_GREEN, G);
-  analogWrite(Pin_BLUE, B);
-}
-
-
-// =====================================================
-// ULTRASSÔNICO DA FRENTE
-// =====================================================
-
-int calDistanciaF() {
-
-  digitalWrite(trigPin, LOW);
-
-  delayMicroseconds(2);
-
-  digitalWrite(trigPin, HIGH);
-
-  delayMicroseconds(10);
-
-  digitalWrite(trigPin, LOW);
-
-  durationF = pulseIn(echoPin, HIGH);
-
-  distFrente = durationF * 0.034 / 2;
-
-  delay(30);
-
-  return distFrente;
-}
-
-
-// =====================================================
-// ULTRASSÔNICO DE TRÁS
-// =====================================================
-
-int calDistanciaT() {
-
-  digitalWrite(trigPin2, LOW);
-
-  delayMicroseconds(2);
-
-  digitalWrite(trigPin2, HIGH);
-
-  delayMicroseconds(10);
-
-  digitalWrite(trigPin2, LOW);
-
-  durationT = pulseIn(echoPin2, HIGH);
-
-  distTras = durationT * 0.034 / 2;
-
-  delay(30);
-
-  return distTras;
-}
-
