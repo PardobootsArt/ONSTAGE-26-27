@@ -3,55 +3,84 @@
 BluetoothSerial SerialBT;
 HardwareSerial SerialMega(2);
 
-const int RX_MEGA = 16;
-const int TX_MEGA = 17;
+// Comunicação com Sullivan
+const int RX_MEGA = 19;
+const int TX_MEGA = 18;
 
-uint8_t macESP_C[] = {0x3C, 0x71, 0xBF, 0xD0, 0x62, 0x74};
-
-bool aguardandoSullivan = true;
 bool conectadoComC = false;
 bool sinal2Recebido = false;
 bool sinalFinalRecebido = false;
 
 void conectarNaESPC() {
-  Serial.println("Mudando ESP B para MASTER...");
 
-  SerialBT.disconnect();
-  delay(1000);
-  SerialBT.end();
-  delay(500);
+  Serial.println();
+  Serial.println("Tentando conectar na ESP C...");
+  Serial.println("Procurando: ESP_C");
 
-  SerialBT.begin("ESP_B", true);
-  delay(500);
+  if (SerialBT.connect("ESP_C")) {
 
-  Serial.println("Conectando na ESP C pelo MAC...");
-
-  if (SerialBT.connect(macESP_C)) {
     conectadoComC = true;
-    aguardandoSullivan = false;
 
+    Serial.println("================================");
     Serial.println("ESP C CONECTADA!");
-    SerialBT.println("2");
-    Serial.println("SINAL 2 ENVIADO PARA ESP C!");
+    Serial.println("Bluetooth funcionando.");
+    Serial.println("Aguardando os robos...");
+    Serial.println("================================");
+
   } else {
-    Serial.println("FALHA AO CONECTAR NA ESP C!");
+
+    conectadoComC = false;
+
+    Serial.println("NAO CONECTOU NA ESP C.");
+    Serial.println("Tentando novamente...");
   }
 }
 
 void setup() {
+
   Serial.begin(115200);
+
+  // ESP B <-> Sullivan
   SerialMega.begin(9600, SERIAL_8N1, RX_MEGA, TX_MEGA);
 
-  // Primeiro: ESP B como SLAVE, esperando o Sullivan.
-  SerialBT.begin("ESP_B");
+  // ESP B = MASTER
+  SerialBT.begin("ESP_B", true);
 
-  Serial.println("ESP B INICIADA.");
-  Serial.println("Aguardando sinal 2 do Sullivan...");
+  Serial.println("================================");
+  Serial.println("ESP B INICIADA");
+  Serial.println("ESP B = MASTER");
+  Serial.println("================================");
+
+  conectarNaESPC();
 }
 
 void loop() {
-  // Sullivan -> ESP B
-  if (aguardandoSullivan && SerialMega.available()) {
+
+  // ==========================================
+  // MANTER BLUETOOTH COM ESP C
+  // ==========================================
+
+  if (!SerialBT.connected()) {
+
+    if (conectadoComC) {
+
+      conectadoComC = false;
+
+      Serial.println("ESP C DESCONECTADA!");
+      Serial.println("Tentando reconectar...");
+    }
+
+    conectarNaESPC();
+
+    delay(2000);
+  }
+
+  // ==========================================
+  // SULLIVAN -> ESP B
+  // ==========================================
+
+  if (SerialMega.available()) {
+
     String mensagem = SerialMega.readStringUntil('\n');
     mensagem.trim();
 
@@ -59,14 +88,30 @@ void loop() {
     Serial.println(mensagem);
 
     if (mensagem == "2" && !sinal2Recebido) {
+
       sinal2Recebido = true;
+
       Serial.println("2 OBJETOS ENCONTRADOS!");
-      conectarNaESPC();
+
+      if (SerialBT.connected()) {
+
+        SerialBT.println("2");
+
+        Serial.println("SINAL 2 ENVIADO PARA ESP C!");
+
+      } else {
+
+        Serial.println("ERRO: ESP C NAO ESTA CONECTADA!");
+      }
     }
   }
 
+  // ==========================================
   // ESP C -> ESP B
-  if (conectadoComC && SerialBT.available()) {
+  // ==========================================
+
+  if (SerialBT.available()) {
+
     String mensagem = SerialBT.readStringUntil('\n');
     mensagem.trim();
 
@@ -74,9 +119,14 @@ void loop() {
     Serial.println(mensagem);
 
     if (mensagem == "1" && !sinalFinalRecebido) {
+
       sinalFinalRecebido = true;
+
       Serial.println("SINAL 1 RECEBIDO DA ESP C!");
+
+      // ESP B -> Sullivan
       SerialMega.println("1");
+
       Serial.println("SINAL 1 ENVIADO PARA O SULLIVAN!");
     }
   }

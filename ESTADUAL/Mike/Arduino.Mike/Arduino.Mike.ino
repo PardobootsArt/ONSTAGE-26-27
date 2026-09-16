@@ -17,7 +17,6 @@ void girar(int lado, unsigned long tempo);
 //=====================================================
 // VARIAVEIS RECEBIDAS DO PYTHON
 //=====================================================
-
 // ID da Apriltag detectada.
 // Se for -1 significa que nenhuma tag foi encontrada.
 int tagID = -1;
@@ -27,20 +26,6 @@ float erroX = 0;
 
 // Erro de distancia.
 float erroDistancia = 0;
-2728293031323334353637383940414243444546474849505152535455565758596061626364
-// ID da Apriltag detectada.
-// Se for -1 significa que nenhuma tag foi encontrada.
-int tagID = -1;
-
-// Erro horizontal em pixels.
-float erroX = 0;
-
-// Erro de distancia.
-float erroDistancia = 0;
-
-
-
-
 
 float erroPerspectiva = 0;
 
@@ -116,33 +101,38 @@ void falarOi() {
   esquerdo.attach(5);
   esquerdo.write(180);
   direito.write(0);
-  for (int i = 0; i < 3; i++) {
-    direito.write(120);
-    delay(200);
-    direito.write(180);
-    delay(200);
-  }
+
+  direito.write(120);
+  delay(500);
+  direito.write(180);
+  delay(500);
+  direito.write(120);
+  delay(500);
+  direito.write(180);
+  delay(500);
+  direito.write(120);
+  delay(500);
+  direito.write(180);
+  delay(500);
+
   direito.write(0);
 }
 void animado() {
-
-  direito.attach(4);
-  esquerdo.attach(5);
-  esquerdo.write(180);
-  direito.write(0);
-  for (int i = 0; i < 3; i++) {
-    direito.write(120);
-    esquerdo.write(90);
-    delay(200);
+  if (repBraco1 == false) {
+    repBraco1 = true;
+    direito.attach(4);
+    esquerdo.attach(5);
+    esquerdo.write(180);
+    delay(150);
+    direito.write(0);
+    delay(500);
     direito.write(180);
+    delay(150);
     esquerdo.write(0);
-    delay(200);
+    delay(500);
     direito.write(90);
-    esquerdo.write(60);
-    delay(200);
-    direito.write(180);
-    esquerdo.write(0);
-    delay(200);
+    delay(150);
+    esquerdo.write(90);
   }
 }
 void girar(int lado, unsigned long tempo) {
@@ -240,7 +230,6 @@ void loop() {
 
     if (tagID == 0) {
       int velocidadeBase = 40;
-      int velocidadeBase = 55;
       // Controle proporcional
 
       Vx = velocidadeBase + (KpDist * erroDistancia);
@@ -295,7 +284,7 @@ void loop() {
 
     if (tagID == 2 && repTag2 == false) {
       repTag2 = true;
-      girar(1, 1200);
+      girar(1, 2200);
       delay(500);
     }
 
@@ -338,8 +327,41 @@ void loop() {
     }
     if (tagID == 5 && repTag5 == false) {
       repTag5 = true;
-      animado();
+
+      direito.attach(4);
+      esquerdo.attach(5);
+      esquerdo.write(180);
+      delay(150);
+      direito.write(0);
       delay(500);
+      direito.write(180);
+      delay(150);
+      esquerdo.write(0);
+      delay(500);
+      direito.write(90);
+      delay(150);
+      esquerdo.write(90);
+      delay(500);
+      direito.write(180);
+      delay(150);
+      esquerdo.write(0);
+      delay(500);
+      direito.write(90);
+      delay(150);
+      esquerdo.write(90);
+      delay(500);
+      direito.write(180);
+      delay(150);
+      esquerdo.write(0);
+      delay(500);
+      direito.write(90);
+      delay(150);
+      esquerdo.write(90);
+      delay(500);
+
+      esquerdo.write(180);
+      delay(150);
+      direito.write(0);
     }
   }
 }

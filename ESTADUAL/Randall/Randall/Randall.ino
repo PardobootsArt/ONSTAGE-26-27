@@ -6,7 +6,6 @@ Adafruit_TCS34725 tcs = Adafruit_TCS34725(
   TCS34725_INTEGRATIONTIME_300MS,
   TCS34725_GAIN_1X);
 
-//#include "mpu6050.h"
 
 //===== PINOS =====
 
@@ -48,12 +47,20 @@ int distTras;
 
 //===== MPU6050 =====
 
+float ang;
 int ultimoErro = 0;
 
 int Kp = 4;
 int Kd = 1;
 
-int velocidadeBase = 70;
+int velocidadeBase = 65;
+
+const int MPU = 0x68;
+
+float anguloZ = 0.0;
+unsigned long ultimoTempo;
+
+float offsetGz = 0;
 
 //===== CORES =====
 
@@ -212,17 +219,9 @@ void setup() {
   // MPU6050
   Serial2.begin(115200);
 
-  mpu_begin();
+  iniciarMPU();
 
-  Serial.println("Calibrando, deixa parado!");
-
-  delay(1000);
-
-  mpu_calibrate(200);
-
-  Serial.println("===== Calibrado! =====\n");
-
-  mpu_reset();
+  Serial.println("MPU pronto!");
 
   // Motores
   pinMode(motorE1, OUTPUT);
@@ -305,9 +304,6 @@ void direcaoMotores(int direcao) {
 // =====================================================
 float referencia;
 void loop() {
-
-  mpu_loop();
-
   uint16_t r, g, b, c;
 
   tcs.getRawData(&r, &g, &b, &c);
@@ -345,17 +341,17 @@ void loop() {
     // NÃO MEXER
     // =================================================
 
-    int erro = getAngleZ();
+    float erro = obterAngulo();
 
     float correcaoP = Kp * erro;
     float correcaoD = Kd * (ultimoErro - erro);
     float correcaoFinal = correcaoP + correcaoD;
-    float velEsq = (velocidadeBase + 10) + correcaoFinal ;
+    float velEsq = velocidadeBase + correcaoFinal;
     float velDir = velocidadeBase - correcaoFinal;
     velEsq = constrain(velEsq, 0, 255);
     velDir = constrain(velDir, 0, 255);
 
-    analogWrite(enbE, velEsq );
+    analogWrite(enbE, velEsq);
     analogWrite(enbD, velDir);
 
     ultimoErro = erro;
@@ -393,25 +389,23 @@ void loop() {
       AcenderLed(175, 0, 255);
 
       analogWrite(enbE, 65);
-      analogWrite(enbD, 75);
+      analogWrite(enbD, 65);
 
       direcaoMotores(1);
 
-      delay(1550);
+      delay(550);
 
       direcaoMotores(-1);
 
       delay(1000);
-      direcaoMotores(1);
-      analogWrite(enbE, 165);
-      analogWrite(enbD, 210);
-
-      digitalWrite(motorE1, HIGH);
-      digitalWrite(motorE2, LOW);
-
-      digitalWrite(motorD1, LOW);
-      digitalWrite(motorD2, HIGH);
-      delay(950);
+      ang = obterAngulo();
+      while (ang < 85) {
+        analogWrite(enbE, 80);
+        analogWrite(enbD, 80);
+        direcaoMotores(2);
+        Serial.println(ang);
+        ang = obterAngulo();
+      }
       direcaoMotores(-1);
 
       delay(2000);
@@ -435,16 +429,13 @@ void loop() {
     // CORREÇÃO DOS MOTORES
     // =================================================
 
-    int distF = calDistanciaF();
-    int distT = calDistanciaT();
+    float erro = (obterAngulo() - 85);
 
-    int erro = distF - distT;
-
-    int correcaoP = Kp * erro;
-    int correcaoD = Kd * (ultimoErro - erro);
-    int correcaoFinal = correcaoP + correcaoD;
-    int velEsq = velocidadeBase - correcaoFinal;
-    int velDir = velocidadeBase + correcaoFinal;
+    float correcaoP = Kp * erro;
+    float correcaoD = Kd * (ultimoErro - erro);
+    float correcaoFinal = correcaoP + correcaoD;
+    float velEsq = velocidadeBase + correcaoFinal;
+    float velDir = velocidadeBase - correcaoFinal;
     velEsq = constrain(velEsq, 0, 255);
     velDir = constrain(velDir, 0, 255);
 
@@ -501,7 +492,7 @@ void loop() {
       AcenderLed(150, 0, 255);
     }
 
-    else if (r > 3750 && r < 5000 && g > 2000 && g < 5200 && b > 500 && b < 2000) {
+    else if (r > 2500 && r < 4000 && g > 2000 && g < 3200 && b > 400 && b < 1500) {
 
       corAtual = 2;
 
@@ -510,7 +501,7 @@ void loop() {
       AcenderLed(255, 130, 0);
     }
 
-    else if (r > 2000 && r < 4000 && g > 600 && g < 1500 && b > 500 && b < 1200) {
+    else if (r > 3500 && r < 5200 && g > 1000 && g < 2000 && b > 1100 && b < 2100) {
 
       corAtual = 3;
 
@@ -519,7 +510,7 @@ void loop() {
       AcenderLed(255, 0, 175);
     }
 
-    else if (r > 600 && r < 2000 && g > 1500 && g < 3000 && b > 1300 && b < 2200) {
+    else if (r > 600 && r < 2000 && g > 1000 && g < 2500 && b > 600 && b < 2000) {
 
       corAtual = 4;
 
