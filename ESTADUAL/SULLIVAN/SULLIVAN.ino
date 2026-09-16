@@ -686,7 +686,7 @@ void loop() {
 
             if (frenteLivre() == true) {
 
-              frente(150, 5500);
+              frente(150, 5200);
 
               pararMotores();
             }
@@ -708,7 +708,7 @@ void loop() {
 
             if (frenteLivre() == true) {
 
-              frente(150, 5500);
+              frente(150, 5200);
 
               pararMotores();
             }

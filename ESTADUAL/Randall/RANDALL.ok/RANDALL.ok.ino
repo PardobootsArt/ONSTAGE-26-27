@@ -50,10 +50,10 @@ int distTras;
 float ang;
 int ultimoErro = 0;
 
-int Kp = 4;
+int Kp = 6;
 int Kd = 1;
 
-int velocidadeBase = 65;
+int velocidadeBase = 55;
 
 const int MPU = 0x68;
 
@@ -393,15 +393,15 @@ void loop() {
 
       direcaoMotores(1);
 
-      delay(550);
+      delay(1500);
 
       direcaoMotores(-1);
 
       delay(1000);
       ang = obterAngulo();
-      while (ang < 85) {
-        analogWrite(enbE, 80);
-        analogWrite(enbD, 80);
+      while (ang < 80) {
+        analogWrite(enbE, 85);
+        analogWrite(enbD, 85);
         direcaoMotores(2);
         Serial.println(ang);
         ang = obterAngulo();
@@ -429,7 +429,7 @@ void loop() {
     // CORREÇÃO DOS MOTORES
     // =================================================
 
-    float erro = (obterAngulo() - 85);
+    float erro = (obterAngulo() - 87);
 
     float correcaoP = Kp * erro;
     float correcaoD = Kd * (ultimoErro - erro);
@@ -492,7 +492,7 @@ void loop() {
       AcenderLed(150, 0, 255);
     }
 
-    else if (r > 2500 && r < 4000 && g > 2000 && g < 3200 && b > 400 && b < 1500) {
+    else if (r > 3000 && r < 5200 && g > 2000 && g < 3200 && b > 400 && b < 1500) {
 
       corAtual = 2;
 
@@ -542,12 +542,16 @@ void loop() {
 
 
       // Confirma após 10 leituras
-      if (contadorLeituras >= 5) {
+      if (contadorLeituras >= 2) {
 
         // Só conta se for diferente da última cor
         if (corEmConfirmacao != ultimaCor) {
-
           quantidadeCores++;
+          direcaoMotores(-1);
+          delay(1000);
+          if (quantidadeCores <= 2) {
+            direcaoMotores(1);
+          }
 
           ultimaCor = corEmConfirmacao;
 
@@ -569,14 +573,9 @@ void loop() {
     if (quantidadeCores >= 3) {
 
       encontrouTresCores = true;
-
-      analogWrite(enbE, 65);
-      analogWrite(enbD, 65);
-
-      delay(1000);
-
       analogWrite(enbE, 0);
       analogWrite(enbD, 0);
+      direcaoMotores(-1);
 
       Serial.println(
         "3 CORES DETECTADAS - PARANDO!");
