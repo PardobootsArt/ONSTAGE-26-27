@@ -4,9 +4,6 @@
 */
 
 #include "mpu6050.h"
-#include <PushButton.h>
-
-PushButton bot(7);
 
 void setup() {
   Serial.begin(9600);
@@ -23,16 +20,11 @@ void setup() {
 
 void loop() {
   mpu_loop();
-  bot.button_loop();
 
   //Serial.print("roll(x):");Serial.println(getAngleX());
   //Serial.print("pitch(y):");Serial.println(getAngleY());
   //Serial.print("yaw(z):");
   Serial.println(getAngleZ());
   
-  if(bot.pressed()) {
-    mpu_calibrate(400);
-    mpu_reset();
-  }
 
 }

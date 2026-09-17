@@ -1,6 +1,6 @@
 //giroscopio
 #include <Wire.h>
-const int MPU = 0x68; 
+const int MPU = 0x68;
 
 float anguloZ = 0.0;
 unsigned long ultimoTempo;
@@ -39,6 +39,7 @@ float Kd = 0.05;
 float anguloReferencia = 0;
 float ultimoErro = 0;
 unsigned long ultimoControle = 0;
+float angAtual;
 
 //==============FUNÇÕES DA PROGRAMAÇÃO==========================
 //========================TRONCO===========
@@ -89,8 +90,9 @@ bool varreduraCompleta = false;
 int procurarObjeto() {
   while (true) {
     meuServo.write(posicaoAtual);
+    /*
     int oi = (posicaoAtual * (-2)) + 200;
-    girarTronco(125, oi);
+    girarTronco(125, oi);*/
     delay(15);
 
     int distancia = lerDistancia();
@@ -220,6 +222,7 @@ int motorEF1 = 26;
 int motorEF2 = 28;
 int motorET1 = 22;
 int motorET2 = 24;
+
 int motorDF1 = 34;
 int motorDF2 = 36;
 int motorDT1 = 30;
@@ -292,8 +295,7 @@ void setup() {
 }
 
 float correcao() {
-  float ang = obterAngulo();
-  float erro = anguloReferencia - ang;
+  float erro = obterAngulo();
 
   unsigned long agora = millis();
   float dt = (agora - ultimoControle) / 1000.0;
@@ -322,14 +324,13 @@ void pararMotores() {
 }
 //ok
 void esquerda(int velo, int tempoMs) {
-  anguloReferencia = obterAngulo();
   ultimoErro = 0;
   ultimoControle = millis();
   unsigned long inicio = millis();
   while (millis() - inicio < tempoMs) {
     float c = correcao();
-    float velDir = velo + c;
-    float velEsq = velo - c;
+    float velDir = velo - c;
+    float velEsq = velo + c;
     velEsq = constrain(velEsq, 0, 255);
     velDir = constrain(velDir, 0, 255);
     analogWrite(enbEF, velEsq);
@@ -367,8 +368,8 @@ void direita(int velo, int tempoMs) {
 
   while (millis() - inicio < tempoMs) {
     float c = correcao();
-    float velDir = velo - c;
-    float velEsq = velo + c;
+    float velDir = velo + c;
+    float velEsq = velo - c;
     velEsq = constrain(velEsq, 0, 255);
     velDir = constrain(velDir, 0, 255);
     analogWrite(enbEF, velEsq);
@@ -383,6 +384,7 @@ void direita(int velo, int tempoMs) {
     digitalWrite(motorET2, LOW);
     digitalWrite(motorDT1, HIGH);
     digitalWrite(motorDT2, LOW);
+    Serial.println(c);
   }
   analogWrite(enbEF, 0);
   analogWrite(enbDF, 0);
@@ -406,8 +408,8 @@ void frente(int velo, int tempoMs) {
 
   while (millis() - inicio < tempoMs) {
     float c = correcao();
-    float velDir = velo - c;
-    float velEsq = velo + c;
+    float velDir = velo + c;
+    float velEsq = velo - c;
     velEsq = constrain(velEsq, 0, 255);
     velDir = constrain(velDir, 0, 255);
     analogWrite(enbEF, velEsq);
@@ -445,8 +447,8 @@ void tras(int velo, int tempoMs) {
 
   while (millis() - inicio < tempoMs) {
     float c = correcao();
-    float velDir = velo + c;
-    float velEsq = velo - c;
+    float velDir = velo - c;
+    float velEsq = velo + c;
     velEsq = constrain(velEsq, 0, 255);
     velDir = constrain(velDir, 0, 255);
     analogWrite(enbEF, velEsq);
@@ -500,15 +502,25 @@ bool frenteLivre() {
 }
 
 void loop() {
+  direita(150, 3000);
+  delay(1000);
+  esquerda(150, 3000);
+  delay(1000);
+  tras(150, 3000);
+  delay(1000);
+  frente(150, 3000);
+  delay(1000);            
+  /*
   int distancia = lerDistancia();
   if (distancia > 0 && distancia < 10) {
     if (repeticao == 0) {
+      angAtual = obterAngulo();
       repeticao++;
       delay(5500);
-      direita(255, 8000);
+      direita(150, 9000);
       pararMotores();
       delay(500);
-      frente(255, 1000);
+      frente(150, 1500);
       delay(1000);
       while (contagemObjeto < 2) {
         int grauss = procurarObjeto();
@@ -518,12 +530,12 @@ void loop() {
             //objeto na esquerda, ir para direita
             contagemObjeto++;
 
-            direita(165, tempo);
+            direita(150, tempo);
             pararMotores();
             delay(200);
             Serial.println(tempo);
             if (frenteLivre() == true) {
-              frente(255, 4500);
+              frente(150, 5500);
               pararMotores();
             }
           }
@@ -531,12 +543,12 @@ void loop() {
           if (grauss < 90) {
             //objeto na direita, ir para esquerda
             contagemObjeto++;
-            esquerda(165, tempo);
+            esquerda(150, tempo);
             pararMotores();
             delay(200);
             Serial.println(tempo);
             if (frenteLivre() == true) {
-              frente(255, 4500);
+              frente(150, 4500);
               pararMotores();
             }
           }
@@ -565,4 +577,5 @@ void loop() {
       }
     }
   }
+  */
 }
