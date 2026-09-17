@@ -284,7 +284,7 @@ void loop() {
 
     if (tagID == 2 && repTag2 == false) {
       repTag2 = true;
-      girar(1, 2200);
+      girar(1, 2500);
       delay(500);
     }
 

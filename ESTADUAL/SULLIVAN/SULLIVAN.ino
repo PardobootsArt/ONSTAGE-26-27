@@ -1,6 +1,6 @@
 //giroscopio
 #include <Wire.h>
-const int MPU = 0x68; 
+const int MPU = 0x68;
 
 float anguloZ = 0.0;
 unsigned long ultimoTempo;
@@ -288,7 +288,6 @@ void setup() {
   Serial2.begin(115200);
 
   // Comunicação com a ESP B
-  Serial1.begin(9600);
 
   iniciarMPU();
 
@@ -316,8 +315,7 @@ void setup() {
   attachInterrupt(
     digitalPinToInterrupt(yTronco),
     countDegrees,
-    CHANGE
-  );
+    CHANGE);
 
   analogWrite(enbtronco, 100);
 
@@ -640,6 +638,23 @@ void loop() {
   int distanciaInicial = lerDistancia();
 
   if (distanciaInicial > 0 && distanciaInicial < 10) {
+    /*
+    if (Serial1.available()) {
+
+      String resposta = Serial1.readStringUntil('\n');
+
+      resposta.trim();
+
+      Serial.print("Recebido da ESP B: ");
+      Serial.println(resposta);
+
+      if (resposta == "1") {
+
+        //levantarBracos = true;
+
+        Serial.println("SINAL 1 RECEBIDO!");
+      }
+    }*/
 
     Serial.println("OBJETO DETECTADO!");
     Serial.println("SULLIVAN INICIANDO!");
@@ -648,15 +663,13 @@ void loop() {
 
       repeticao++;
 
-      delay(5500);
-
       direita(150, 9000);
 
       pararMotores();
 
       delay(500);
 
-      frente(150, 1500);
+      frente(150, 2250);
 
       delay(1000);
 
@@ -686,7 +699,7 @@ void loop() {
 
             if (frenteLivre() == true) {
 
-              frente(150, 5200);
+              frente(150, 5400);
 
               pararMotores();
             }
@@ -727,82 +740,37 @@ void loop() {
       // ENCONTROU OS 2 OBJETOS
       //==========================================
 
-      pararMotores();
-
-      Serial.println("2 OBJETOS ENCONTRADOS!");
-
-      // Sullivan -> ESP B
-      Serial1.println("2");
-
-      Serial.println("SINAL 2 ENVIADO PARA ESP B!");
-
-      //==========================================
-      // AGUARDA O RANDALL TERMINAR
-      //==========================================
-
-      Serial.println("AGUARDANDO SINAL 1 DA ESP B...");
-
       bool levantarBracos = false;
-
-      while (!levantarBracos) {
-
-        if (Serial1.available()) {
-
-          String resposta = Serial1.readStringUntil('\n');
-
-          resposta.trim();
-
-          Serial.print("Recebido da ESP B: ");
-          Serial.println(resposta);
-
-          if (resposta == "1") {
-
-            levantarBracos = true;
-
-            Serial.println("SINAL 1 RECEBIDO!");
-          }
+      while (contagemObjeto > 1) {
+        Serial.println("entrei");
+        int distancia = lerDistancia();
+        if (distancia > 0 && distancia < 15) {
+          Serial.println("levantei");
+          analogWrite(enbracoE, 120);
+          analogWrite(enbracoD, 120);
+          digitalWrite(bracoE1, HIGH);
+          digitalWrite(bracoE2, LOW);
+          digitalWrite(bracoD1, HIGH);
+          digitalWrite(bracoD2, LOW);
+          delay(450);
+          digitalWrite(bracoE1, LOW);
+          digitalWrite(bracoE2, LOW);
+          delay(50);
+          digitalWrite(bracoD1, LOW);
+          digitalWrite(bracoD2, LOW);
         }
+        //==========================================
+        // LEVANTA OS DOIS BRAÇOS
+        //==========================================
 
-        // Sullivan permanece parado
-        pararMotores();
+        // Não inicia novamente
+        repeticao = 1;
       }
-
-      //==========================================
-      // LEVANTA OS DOIS BRAÇOS
-      //==========================================
-
-      Serial.println("LEVANTANDO OS BRACOS!");
-
-      analogWrite(enbracoE, 120);
-      analogWrite(enbracoD, 120);
-
-      digitalWrite(bracoE1, HIGH);
-      digitalWrite(bracoE2, LOW);
-
-      digitalWrite(bracoD1, HIGH);
-      digitalWrite(bracoD2, LOW);
-
-      delay(450);
-
-      digitalWrite(bracoE1, LOW);
-      digitalWrite(bracoE2, LOW);
-
-      digitalWrite(bracoD1, LOW);
-      digitalWrite(bracoD2, LOW);
-
-      analogWrite(enbracoE, 0);
-      analogWrite(enbracoD, 0);
-
-      Serial.println("BRACOS LEVANTADOS!");
-
-      // Não inicia novamente
-      repeticao = 1;
     }
-  }
 
-  else {
-
-    // Sem objeto: permanece parado.
-    pararMotores();
+    else {
+      // Sem objeto: permanece parado.
+      pararMotores();
+    }
   }
 }

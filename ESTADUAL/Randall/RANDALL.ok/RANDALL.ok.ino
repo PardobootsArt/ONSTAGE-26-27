@@ -74,6 +74,10 @@ int contadorLeituras = 0;
 
 bool encontrouTresCores = false;
 
+//===== COMUNICAÇÃO COM ESP C =====
+bool sinalRecebido = false;
+bool sinalEnviado = false;
+
 int a;
 
 // =====================================================
@@ -205,7 +209,10 @@ float obterAngulo() {
 
 void setup() {
 
-  Serial.begin(9600);
+  Serial.begin(115200);
+
+  // Comunicação com a ESP C
+  Serial1.begin(115200);
 
   // Inicializa o sensor TCS34725
   if (!tcs.begin()) {
@@ -246,13 +253,11 @@ void setup() {
   pinMode(Pin_BLUE, OUTPUT);
 
   AcenderLed(175, 0, 255);
-
-  // Espera objeto ficar a menos de 5 cm
   a = 0;
 
   while (a < 1) {
 
-    int distancia = calDistanciaF();
+    int distancia = calDistanciaT();
 
     if (distancia > 0 && distancia < 5) {
       a = 3;
@@ -304,6 +309,32 @@ void direcaoMotores(int direcao) {
 // =====================================================
 float referencia;
 void loop() {
+  // ==========================================
+  // RECEBE SINAL DA ESP C
+  // ==========================================
+  /*
+if (!sinalRecebido && Serial1.available()) {
+
+  String mensagem = Serial1.readStringUntil('\n');
+  mensagem.trim();
+
+  Serial.print("Recebido da ESP C: ");
+  Serial.println(mensagem);
+
+  if (mensagem == "1") {
+
+    sinalRecebido = true;
+
+    Serial.println("SINAL 1 RECEBIDO!");
+    Serial.println("RANDALL INICIANDO!");
+  }
+}
+
+// Enquanto não receber o sinal, não faz nada
+if (!sinalRecebido) {
+  return;
+}
+*/
   uint16_t r, g, b, c;
 
   tcs.getRawData(&r, &g, &b, &c);
@@ -367,14 +398,6 @@ void loop() {
     Serial.print(velEsq);
     Serial.print(" velD ");
     Serial.println(velDir);
-    /*
-    Serial.print("red: ");
-    Serial.print(red);
-    Serial.print(" green: ");
-    Serial.print(green);
-    Serial.print(" blue ");
-    Serial.println(blue);
-    */
 
     // =================================================
     // DETECÇÃO DO PRETO
@@ -461,15 +484,14 @@ void loop() {
     // SERIAL - CORES NA HORIZONTAL
     // =================================================
 
-    Serial.print("Azul: ");
-    Serial.print(blue);
-
-    Serial.print(" | Vermelho: ");
+    Serial.print("Vermelho: ");
     Serial.print(red);
 
     Serial.print(" | Verde: ");
     Serial.println(green);
 
+    Serial.print(" | Azul: ");
+    Serial.print(blue);
 
     Serial.print("Quantidade de Cores: ");
     Serial.print(quantidadeCores);
@@ -492,7 +514,7 @@ void loop() {
       AcenderLed(150, 0, 255);
     }
 
-    else if (r > 3000 && r < 5200 && g > 2000 && g < 3200 && b > 400 && b < 1500) {
+    else if (r > 4000 && r < 6200 && g > 3000 && g < 4200 && b > 500 && b < 2000) {
 
       corAtual = 2;
 
@@ -577,8 +599,16 @@ void loop() {
       analogWrite(enbD, 0);
       direcaoMotores(-1);
 
-      Serial.println(
-        "3 CORES DETECTADAS - PARANDO!");
+      Serial.println("3 CORES DETECTADAS - PARANDO!");
+
+      if (!sinalEnviado) {
+
+        Serial1.println("1");
+
+        sinalEnviado = true;
+
+        Serial.println("SINAL 1 ENVIADO PARA ESP C!");
+      }
     }
   }
 }

@@ -41,7 +41,7 @@ void setup() {
   Serial.begin(115200);
 
   // ESP B <-> Sullivan
-  SerialMega.begin(9600, SERIAL_8N1, RX_MEGA, TX_MEGA);
+  SerialMega.begin(115200, SERIAL_8N1, RX_MEGA, TX_MEGA);
 
   // ESP B = MASTER
   SerialBT.begin("ESP_B", true);
@@ -103,31 +103,6 @@ void loop() {
 
         Serial.println("ERRO: ESP C NAO ESTA CONECTADA!");
       }
-    }
-  }
-
-  // ==========================================
-  // ESP C -> ESP B
-  // ==========================================
-
-  if (SerialBT.available()) {
-
-    String mensagem = SerialBT.readStringUntil('\n');
-    mensagem.trim();
-
-    Serial.print("Recebido da ESP C: ");
-    Serial.println(mensagem);
-
-    if (mensagem == "1" && !sinalFinalRecebido) {
-
-      sinalFinalRecebido = true;
-
-      Serial.println("SINAL 1 RECEBIDO DA ESP C!");
-
-      // ESP B -> Sullivan
-      SerialMega.println("1");
-
-      Serial.println("SINAL 1 ENVIADO PARA O SULLIVAN!");
     }
   }
 }
