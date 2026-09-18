@@ -151,10 +151,9 @@ def main():
                     texto = texto.lower()
 
                     palavras_susto = {
-                        "susto",
-                        "justo",
-                        "custo",
-                        "gusto"
+                        "ai",
+                        "aí",
+                        "susto"
                     }
 
                     palavras = texto.split()
@@ -169,7 +168,7 @@ def main():
                     ):
 
                         print(
-                            "⚡ SUSTO DETECTADO!"
+                            "⚡ AI DETECTADO!"
                         )
 
                         enviar_comando("SUSTO")
