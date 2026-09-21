@@ -53,7 +53,7 @@ int ultimoErro = 0;
 int Kp = 6;
 int Kd = 1;
 
-int velocidadeBase = 55;
+int velocidadeBase = 70;
 
 const int MPU = 0x68;
 
@@ -226,10 +226,6 @@ void setup() {
   // MPU6050
   Serial2.begin(115200);
 
-  iniciarMPU();
-
-  Serial.println("MPU pronto!");
-
   // Motores
   pinMode(motorE1, OUTPUT);
   pinMode(motorE2, OUTPUT);
@@ -308,6 +304,7 @@ void direcaoMotores(int direcao) {
 // LOOP
 // =====================================================
 float referencia;
+bool repet = false;
 void loop() {
   // ==========================================
   // RECEBE SINAL DA ESP C
@@ -335,6 +332,16 @@ if (!sinalRecebido) {
   return;
 }
 */
+  if (repet == false) {
+    repet = true;
+    iniciarMPU();
+
+    Serial.println("MPU pronto!");
+    delay(150);
+    AcenderLed(255, 255, 255);
+    delay(300);
+    AcenderLed(175, 0, 255);
+  }
   uint16_t r, g, b, c;
 
   tcs.getRawData(&r, &g, &b, &c);
@@ -416,21 +423,21 @@ if (!sinalRecebido) {
 
       direcaoMotores(1);
 
-      delay(1500);
+      delay(500);
 
       direcaoMotores(-1);
 
       delay(1000);
       ang = obterAngulo();
-      while (ang < 80) {
-        analogWrite(enbE, 85);
-        analogWrite(enbD, 85);
+      while (ang < 85) {
+        analogWrite(enbE, 90);
+        analogWrite(enbD, 90);
         direcaoMotores(2);
         Serial.println(ang);
         ang = obterAngulo();
       }
       direcaoMotores(-1);
-
+      referencia = obterAngulo();
       delay(2000);
     }
   }
@@ -445,14 +452,14 @@ if (!sinalRecebido) {
     // =================================================
     // MOTORES
     // =================================================
-
+    velocidadeBase=65;
     direcaoMotores(1);
 
     // =================================================
     // CORREÇÃO DOS MOTORES
     // =================================================
 
-    float erro = (obterAngulo() - 87);
+    float erro = (obterAngulo() - referencia);
 
     float correcaoP = Kp * erro;
     float correcaoD = Kd * (ultimoErro - erro);
@@ -521,6 +528,8 @@ if (!sinalRecebido) {
       Serial.println("AMARELO");
 
       AcenderLed(255, 130, 0);
+      
+      referencia = obterAngulo();
     }
 
     else if (r > 3500 && r < 5200 && g > 1000 && g < 2000 && b > 1100 && b < 2100) {
@@ -530,6 +539,7 @@ if (!sinalRecebido) {
       Serial.println("ROSA");
 
       AcenderLed(255, 0, 175);
+      referencia = obterAngulo();
     }
 
     else if (r > 600 && r < 2000 && g > 1000 && g < 2500 && b > 600 && b < 2000) {
@@ -539,6 +549,7 @@ if (!sinalRecebido) {
       Serial.println("AZUL");
 
       AcenderLed(64, 224, 208);
+      referencia = obterAngulo();
     }
     // NENHUMA COR
     else {
