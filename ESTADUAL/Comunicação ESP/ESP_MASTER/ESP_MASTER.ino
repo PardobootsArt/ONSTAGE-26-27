@@ -1,3 +1,9 @@
+#include "BluetoothSerial.h"
+
+BluetoothSerial SerialBT;
+
+bool conectadoComB = false;
+
 // Ultrassonico
 const int trigPin = 18;
 const int echoPin = 19;
@@ -12,6 +18,9 @@ const int led = 33;
 
 bool objetoDetectado = false;
 bool portaAberta = false;
+
+// MAC da ESP B
+uint8_t macESP_B[] = { 0x3C, 0x71, 0xBF, 0x45, 0xC1, 0xBE };
 
 long lerDistancia() {
   digitalWrite(trigPin, LOW);
@@ -40,6 +49,18 @@ void abrirPorta() {
 void setup() {
   Serial.begin(115200);
 
+  SerialBT.begin("ESP_A", true);
+
+  Serial.println("ESP A = MASTER");
+  Serial.println("Tentando conectar na ESP B...");
+
+  if (SerialBT.connect(macESP_B)) {
+    conectadoComB = true;
+    Serial.println("ESP B CONECTADA!");
+  } else {
+    conectadoComB = false;
+    Serial.println("NAO FOI POSSIVEL CONECTAR NA ESP B.");
+  }
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
   pinMode(IN1, OUTPUT);
@@ -64,6 +85,12 @@ void loop() {
   if (distancia > 0 && distancia < 10 && !objetoDetectado) {
     objetoDetectado = true;
     Serial.println("OBJETO DETECTADO!");
+    if (SerialBT.connected()) {
+      SerialBT.println("1");
+      Serial.println("SINAL 1 ENVIADO PARA ESP B!");
+    } else {
+      Serial.println("ESP B NAO ESTA CONECTADA!");
+    }
     digitalWrite(led, HIGH);
     abrirPorta();
     delay(1000);
