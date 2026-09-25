@@ -231,6 +231,7 @@ void loop() {
     if (tagID == 0) {
       int velocidadeBase = 40;
       // Controle proporcional
+      repTag2=false;
 
       Vx = velocidadeBase + (KpDist * erroDistancia);
       W = KpX * erroX;
@@ -284,7 +285,7 @@ void loop() {
 
     if (tagID == 2 && repTag2 == false) {
       repTag2 = true;
-      girar(-1, 1550);
+      girar(-1, 1300);
       delay(500);
     }
 

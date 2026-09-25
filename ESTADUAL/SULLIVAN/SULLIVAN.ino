@@ -655,13 +655,13 @@ void loop() {
         repeticao++;
         delay(2500);
 
-        direita(150, 9000);
+        direita(150, 9150);
 
         pararMotores();
 
         delay(500);
 
-        frente(150, 2250);
+        frente(150, 1250);
 
         delay(1000);
 
@@ -690,8 +690,12 @@ void loop() {
               Serial.println(tempo);
 
               if (frenteLivre() == true) {
+                if (contagemObjeto == 2) {
 
-                frente(150, 5400);
+                  frente(150, 3400);
+                } else {
+                  frente(150, 5200);
+                }
 
                 pararMotores();
               }
@@ -713,9 +717,12 @@ void loop() {
 
               if (frenteLivre() == true) {
 
-                frente(150, 5200);
+                if (contagemObjeto == 2) {
 
-                pararMotores();
+                  frente(150, 3400);
+                } else {
+                  frente(150, 5200);
+                }
               }
             }
           }

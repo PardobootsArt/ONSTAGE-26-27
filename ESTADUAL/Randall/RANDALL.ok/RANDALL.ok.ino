@@ -418,8 +418,8 @@ if (!sinalRecebido) {
 
       AcenderLed(175, 0, 255);
 
-      analogWrite(enbE, 65);
-      analogWrite(enbD, 65);
+      analogWrite(enbE, 70);
+      analogWrite(enbD, 70);
 
       direcaoMotores(1);
 
@@ -437,8 +437,9 @@ if (!sinalRecebido) {
         ang = obterAngulo();
       }
       direcaoMotores(-1);
-      referencia = obterAngulo();
       delay(2000);
+      referencia = obterAngulo();
+    
     }
   }
 
@@ -452,14 +453,14 @@ if (!sinalRecebido) {
     // =================================================
     // MOTORES
     // =================================================
-    velocidadeBase=65;
+    velocidadeBase=60;
     direcaoMotores(1);
 
     // =================================================
     // CORREÇÃO DOS MOTORES
     // =================================================
 
-    float erro = (obterAngulo() - referencia);
+    float erro = (obterAngulo() - (referencia +5));
 
     float correcaoP = Kp * erro;
     float correcaoD = Kd * (ultimoErro - erro);
@@ -528,8 +529,6 @@ if (!sinalRecebido) {
       Serial.println("AMARELO");
 
       AcenderLed(255, 130, 0);
-      
-      referencia = obterAngulo();
     }
 
     else if (r > 3500 && r < 5200 && g > 1000 && g < 2000 && b > 1100 && b < 2100) {
@@ -539,7 +538,6 @@ if (!sinalRecebido) {
       Serial.println("ROSA");
 
       AcenderLed(255, 0, 175);
-      referencia = obterAngulo();
     }
 
     else if (r > 600 && r < 2000 && g > 1000 && g < 2500 && b > 600 && b < 2000) {
@@ -549,7 +547,6 @@ if (!sinalRecebido) {
       Serial.println("AZUL");
 
       AcenderLed(64, 224, 208);
-      referencia = obterAngulo();
     }
     // NENHUMA COR
     else {
