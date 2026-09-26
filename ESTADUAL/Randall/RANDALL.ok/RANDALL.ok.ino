@@ -429,9 +429,9 @@ if (!sinalRecebido) {
 
       delay(1000);
       ang = obterAngulo();
-      while (ang < 85) {
-        analogWrite(enbE, 90);
-        analogWrite(enbD, 90);
+      while (ang < 90) {
+        analogWrite(enbE, 95);
+        analogWrite(enbD, 95);
         direcaoMotores(2);
         Serial.println(ang);
         ang = obterAngulo();
@@ -453,8 +453,9 @@ if (!sinalRecebido) {
     // =================================================
     // MOTORES
     // =================================================
-    velocidadeBase=60;
+    velocidadeBase=50;
     direcaoMotores(1);
+    Kp=7;
 
     // =================================================
     // CORREÇÃO DOS MOTORES
@@ -572,7 +573,7 @@ if (!sinalRecebido) {
 
 
       // Confirma após 10 leituras
-      if (contadorLeituras >= 2) {
+      if (contadorLeituras ==1) {
 
         // Só conta se for diferente da última cor
         if (corEmConfirmacao != ultimaCor) {
