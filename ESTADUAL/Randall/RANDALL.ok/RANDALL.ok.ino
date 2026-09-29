@@ -429,9 +429,9 @@ if (!sinalRecebido) {
 
       delay(1000);
       ang = obterAngulo();
-      while (ang < 90) {
-        analogWrite(enbE, 95);
-        analogWrite(enbD, 95);
+      while (ang < 85) {
+        analogWrite(enbE, 75);
+        analogWrite(enbD, 75);
         direcaoMotores(2);
         Serial.println(ang);
         ang = obterAngulo();
@@ -453,15 +453,15 @@ if (!sinalRecebido) {
     // =================================================
     // MOTORES
     // =================================================
-    velocidadeBase=50;
+    velocidadeBase=55;
     direcaoMotores(1);
-    Kp=7;
+    Kp=6;
 
     // =================================================
     // CORREÇÃO DOS MOTORES
     // =================================================
 
-    float erro = (obterAngulo() - (referencia +5));
+    float erro = (obterAngulo() - referencia);
 
     float correcaoP = Kp * erro;
     float correcaoD = Kd * (ultimoErro - erro);

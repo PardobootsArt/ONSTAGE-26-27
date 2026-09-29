@@ -232,6 +232,8 @@ void loop() {
       int velocidadeBase = 40;
       // Controle proporcional
       repTag2=false;
+      repTag4=false;
+      repTag5=false;
 
       Vx = velocidadeBase + (KpDist * erroDistancia);
       W = KpX * erroX;
