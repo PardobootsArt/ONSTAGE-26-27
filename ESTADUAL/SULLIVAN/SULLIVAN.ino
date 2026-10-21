@@ -1,12 +1,13 @@
 //giroscopio
 #include <Wire.h>
-const int MPU = 0x68; 
+const int MPU = 0x68;
 
 float anguloZ = 0.0;
 unsigned long ultimoTempo;
 
 float offsetGz = 0;
 
+bool iniciarSullivan = false;
 //=============MOVIMENTAÇÃO=============
 #define bracoE1 49
 #define bracoE2 47
@@ -285,10 +286,9 @@ void setup() {
 
   // COMUNICAÇÃO
   Serial.begin(115200);
-  Serial2.begin(115200);
+  Serial2.begin(9600);
 
   // Comunicação com a ESP B
-  Serial1.begin(9600);
 
   iniciarMPU();
 
@@ -316,8 +316,7 @@ void setup() {
   attachInterrupt(
     digitalPinToInterrupt(yTronco),
     countDegrees,
-    CHANGE
-  );
+    CHANGE);
 
   analogWrite(enbtronco, 100);
 
@@ -633,176 +632,154 @@ bool frenteLivre() {
 //===============================================
 
 void loop() {
+  // ==========================
+  // ESP B -> Sullivan
+  // ==========================
 
-  // ESPERA O ULTRASSÔNICO DETECTAR UM OBJETO
-  // O Sullivan começa sozinho, sem esperar a ESP B.
+  if (!iniciarSullivan && Serial2.available()) {
 
-  int distanciaInicial = lerDistancia();
+    String mensagem = Serial2.readStringUntil('\n');
+    mensagem.trim();
 
-  if (distanciaInicial > 0 && distanciaInicial < 10) {
+    Serial.print("Recebido da ESP B: ");
+    Serial.println(mensagem);
 
-    Serial.println("OBJETO DETECTADO!");
-    Serial.println("SULLIVAN INICIANDO!");
+    if (mensagem == "1") {
 
-    if (repeticao == 0) {
+      iniciarSullivan = true;
 
-      repeticao++;
+      Serial.println("SINAL RECEBIDO!");
+      Serial.println("SULLIVAN INICIANDO!");
+      if (repeticao == 0) {
 
-      delay(5500);
+        repeticao++;
+        delay(2500);
 
-      direita(150, 9000);
+        direita(150, 9150);
 
-      pararMotores();
+        pararMotores();
 
-      delay(500);
+        delay(500);
 
-      frente(150, 1500);
+        frente(150, 1250);
 
-      delay(1000);
+        delay(1000);
 
-      // PROCURA OS 2 OBJETOS
+        // PROCURA OS 2 OBJETOS
 
-      while (contagemObjeto < 2) {
+        while (contagemObjeto < 2) {
 
-        int grauss = procurarObjeto();
+          int grauss = procurarObjeto();
 
-        if (grauss != -1) {
+          if (grauss != -1) {
 
-          int tempo = (calcularTempo(grauss)) * 50;
+            int tempo = (calcularTempo(grauss)) * 50;
 
-          if (grauss > 90) {
+            if (grauss > 90) {
 
-            // Objeto na esquerda -> virar para a direita
+              // Objeto na esquerda -> virar para a direita
 
-            contagemObjeto++;
+              contagemObjeto++;
 
-            direita(150, tempo);
-
-            pararMotores();
-
-            delay(200);
-
-            Serial.println(tempo);
-
-            if (frenteLivre() == true) {
-
-              frente(150, 5200);
+              direita(150, tempo);
 
               pararMotores();
+
+              delay(200);
+
+              Serial.println(tempo);
+
+              if (frenteLivre() == true) {
+                if (contagemObjeto == 2) {
+
+                  frente(150, 3400);
+                } else {
+                  frente(150, 5200);
+                }
+
+                pararMotores();
+              }
+            }
+
+            else if (grauss < 90) {
+
+              // Objeto na direita -> virar para a esquerda
+
+              contagemObjeto++;
+
+              esquerda(150, tempo);
+
+              pararMotores();
+
+              delay(200);
+
+              Serial.println(tempo);
+
+              if (frenteLivre() == true) {
+
+                if (contagemObjeto == 2) {
+
+                  frente(150, 3400);
+                } else {
+                  frente(150, 5200);
+                }
+              }
             }
           }
 
-          else if (grauss < 90) {
+          else if (varreduraCompleta) {
 
-            // Objeto na direita -> virar para a esquerda
+            frente(110, 200);
 
-            contagemObjeto++;
-
-            esquerda(150, tempo);
-
-            pararMotores();
-
-            delay(200);
-
-            Serial.println(tempo);
-
-            if (frenteLivre() == true) {
-
-              frente(150, 5200);
-
-              pararMotores();
-            }
+            varreduraCompleta = false;
           }
         }
 
-        else if (varreduraCompleta) {
+        //==========================================
+        // ENCONTROU OS 2 OBJETOS
+        //==========================================
 
-          frente(110, 200);
+        bool levantarBracos = false;
+        while (contagemObjeto > 1) {
+          Serial.println("entrei");
+          int distancia = lerDistancia();
+          if (distancia > 0 && distancia < 15) {
+            Serial.println("levantei");
+            analogWrite(enbracoE, 120);
+            analogWrite(enbracoD, 120);
+            digitalWrite(bracoE1, HIGH);
+            digitalWrite(bracoE2, LOW);
+            digitalWrite(bracoD1, HIGH);
+            digitalWrite(bracoD2, LOW);
+            delay(450);
+            digitalWrite(bracoE1, LOW);
+            digitalWrite(bracoE2, LOW);
+            delay(50);
+            digitalWrite(bracoD1, LOW);
+            digitalWrite(bracoD2, LOW);
+          }
+          //==========================================
+          // LEVANTA OS DOIS BRAÇOS
+          //==========================================
 
-          varreduraCompleta = false;
+          // Não inicia novamente
+          repeticao = 1;
         }
       }
 
-      //==========================================
-      // ENCONTROU OS 2 OBJETOS
-      //==========================================
-
-      pararMotores();
-
-      Serial.println("2 OBJETOS ENCONTRADOS!");
-
-      // Sullivan -> ESP B
-      Serial1.println("2");
-
-      Serial.println("SINAL 2 ENVIADO PARA ESP B!");
-
-      //==========================================
-      // AGUARDA O RANDALL TERMINAR
-      //==========================================
-
-      Serial.println("AGUARDANDO SINAL 1 DA ESP B...");
-
-      bool levantarBracos = false;
-
-      while (!levantarBracos) {
-
-        if (Serial1.available()) {
-
-          String resposta = Serial1.readStringUntil('\n');
-
-          resposta.trim();
-
-          Serial.print("Recebido da ESP B: ");
-          Serial.println(resposta);
-
-          if (resposta == "1") {
-
-            levantarBracos = true;
-
-            Serial.println("SINAL 1 RECEBIDO!");
-          }
-        }
-
-        // Sullivan permanece parado
+      else {
+        // Sem objeto: permanece parado.
         pararMotores();
       }
-
-      //==========================================
-      // LEVANTA OS DOIS BRAÇOS
-      //==========================================
-
-      Serial.println("LEVANTANDO OS BRACOS!");
-
-      analogWrite(enbracoE, 120);
-      analogWrite(enbracoD, 120);
-
-      digitalWrite(bracoE1, HIGH);
-      digitalWrite(bracoE2, LOW);
-
-      digitalWrite(bracoD1, HIGH);
-      digitalWrite(bracoD2, LOW);
-
-      delay(450);
-
-      digitalWrite(bracoE1, LOW);
-      digitalWrite(bracoE2, LOW);
-
-      digitalWrite(bracoD1, LOW);
-      digitalWrite(bracoD2, LOW);
-
-      analogWrite(enbracoE, 0);
-      analogWrite(enbracoD, 0);
-
-      Serial.println("BRACOS LEVANTADOS!");
-
-      // Não inicia novamente
-      repeticao = 1;
     }
   }
 
-  else {
 
-    // Sem objeto: permanece parado.
-    pararMotores();
+  // Enquanto não receber o sinal
+  if (!iniciarSullivan) {
+
+    pararMotores();  // ou sua função equivalente
+
+    return;
   }
 }

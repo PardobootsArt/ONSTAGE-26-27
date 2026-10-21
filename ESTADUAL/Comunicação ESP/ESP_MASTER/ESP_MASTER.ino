@@ -2,8 +2,7 @@
 
 BluetoothSerial SerialBT;
 
-// ESP B
-uint8_t macESP_B[] = {0x3C, 0x71, 0xBF, 0x45, 0xC1, 0xBE};
+bool conectadoComB = false;
 
 // Ultrassonico
 const int trigPin = 18;
@@ -19,7 +18,9 @@ const int led = 33;
 
 bool objetoDetectado = false;
 bool portaAberta = false;
-unsigned long ultimaTentativaBT = 0;
+
+// MAC da ESP B
+uint8_t macESP_B[] = { 0x3C, 0x71, 0xBF, 0x45, 0xC1, 0xBE };
 
 long lerDistancia() {
   digitalWrite(trigPin, LOW);
@@ -45,18 +46,21 @@ void abrirPorta() {
   Serial.println("PORTA ABERTA!");
 }
 
-void enviarSinal1() {
-  if (SerialBT.connected()) {
-    SerialBT.println("1");
-    Serial.println("SINAL 1 ENVIADO PARA ESP B!");
-  } else {
-    Serial.println("ESP B ainda nao conectada.");
-  }
-}
-
 void setup() {
   Serial.begin(115200);
 
+  SerialBT.begin("ESP_A", true);
+
+  Serial.println("ESP A = MASTER");
+  Serial.println("Tentando conectar na ESP B...");
+
+  if (SerialBT.connect(macESP_B)) {
+    conectadoComB = true;
+    Serial.println("ESP B CONECTADA!");
+  } else {
+    conectadoComB = false;
+    Serial.println("NAO FOI POSSIVEL CONECTAR NA ESP B.");
+  }
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
   pinMode(IN1, OUTPUT);
@@ -66,23 +70,10 @@ void setup() {
 
   digitalWrite(led, LOW);
 
-  SerialBT.begin("ESP_A", true);
   Serial.println("ESP A iniciada.");
-  Serial.println("Ultrassonico funcionando enquanto procura a ESP B...");
 }
 
 void loop() {
-  // Tenta conectar sem travar o inicio do ultrassonico.
-  if (!SerialBT.connected() && millis() - ultimaTentativaBT >= 5000) {
-    ultimaTentativaBT = millis();
-    Serial.println("Tentando conectar na ESP B...");
-    if (SerialBT.connect(macESP_B)) {
-      Serial.println("ESP B conectada!");
-    } else {
-      Serial.println("Falha ao conectar na ESP B.");
-    }
-  }
-
   long distancia = lerDistancia();
 
   if (distancia > 0) {
@@ -94,11 +85,15 @@ void loop() {
   if (distancia > 0 && distancia < 10 && !objetoDetectado) {
     objetoDetectado = true;
     Serial.println("OBJETO DETECTADO!");
-
+    if (SerialBT.connected()) {
+      SerialBT.println("1");
+      Serial.println("SINAL 1 ENVIADO PARA ESP B!");
+    } else {
+      Serial.println("ESP B NAO ESTA CONECTADA!");
+    }
     digitalWrite(led, HIGH);
     abrirPorta();
     delay(1000);
-    enviarSinal1();
   }
 
   if (distancia > 15) {
