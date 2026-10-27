@@ -1,4 +1,4 @@
-# python "C:\Users\Instrutor\Documents\GitHub\ONSTAGE-26-27\NACIONAL\AUDIO\mikefala.py"
+# python & "C:\Users\Aluno\AppData\Local\Programs\Python\Python313\python.exe" "C:\Users\Aluno\Documents\GitHub\ONSTAGE-26-27\NACIONAL\AUDIO\mikefala.py"
 import os
 import json
 import queue
@@ -9,12 +9,14 @@ import pygame
 from vosk import Model, KaldiRecognizer
 import pygame
 
+import socket
+
 
 # ==============================
 # CAMINHOS — ALTERE PARA OS SEUS
 # ==============================
-PASTA_AUDIOS = r"C:\Users\Instrutor\Documents\GitHub\ONSTAGE-26-27\NACIONAL\AUDIO\AUDIO"
-CAMINHO_MODELO = r"C:\Users\Instrutor\Documents\GitHub\ONSTAGE-26-27\NACIONAL\AUDIO\vosk-model-small-pt-0.3"
+PASTA_AUDIOS = r"C:\Users\Aluno\Documents\GitHub\ONSTAGE-26-27\NACIONAL\AUDIO\AUDIO"
+CAMINHO_MODELO = r"C:\Users\Aluno\Documents\GitHub\ONSTAGE-26-27\NACIONAL\AUDIO\vosk-model-small-pt-0.3"
 
 # ==============================
 # PALAVRAS-CHAVE E ÁUDIOS DO MIKE
@@ -93,6 +95,23 @@ print("Mike está pronto para reconhecer as palavras!")
 print("Palavras:", ", ".join(palavras_chave.keys()))
 
 # ==============================
+# CONEXÃO COM O UNITY
+# ==============================
+
+HOST = "127.0.0.1"
+PORTA = 5005
+
+servidor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+servidor.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+servidor.bind((HOST, PORTA))
+servidor.listen(1)
+
+print("Aguardando conexão com o Unity...")
+conexao, endereco = servidor.accept()
+
+print("Unity conectado:", endereco)
+
+# ==============================
 # RECONHECIMENTO DE VOZ
 # ==============================
 
@@ -129,4 +148,9 @@ with sd.RawInputStream(
             elif palavra_encontrada != ultima_palavra:
                 arquivo = palavras_chave[palavra_encontrada]
                 reproduzir_audio(arquivo)
+                # Envia somente a palavra-chave ao Unity
+                mensagem = f"PALAVRA:{palavra_encontrada}\n"
+                conexao.sendall(mensagem.encode("utf-8"))
+
+                print("Enviado ao Unity:", mensagem.strip())
                 ultima_palavra = palavra_encontrada
