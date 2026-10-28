@@ -28,26 +28,26 @@ void setup() {
 void loop() {
   bool comandoGrito = false;
 
-  // Recebe comandos enviados pelo Python
+  // Recebe o comando enviado pelo Python
   while (Serial.available() > 0) {
     char comando = Serial.read();
 
     if (comando == 'G') {
       comandoGrito = true;
+      Serial.println("GRITO RECEBIDO");
     }
   }
 
-  // Lê o sensor ultrassônico
+  // Lê o sensor ultrassónico
   calculo();
 
   bool objetoPerto = (distancia > 0 && distancia < 10);
 
-  // O sensor aciona apenas uma vez enquanto o objeto
-  // permanecer próximo; precisa afastar para rearmar.
+  // Aciona apenas uma vez enquanto o objeto está próximo
   bool acionamentoSensor = objetoPerto && !objetoDetectado;
   objetoDetectado = objetoPerto;
 
-  // O grito ou o sensor podem acionar os LEDs.
+  // O grito ou o sensor podem acionar os LEDs
   if (comandoGrito || acionamentoSensor) {
     estadoLed = !estadoLed;
 
