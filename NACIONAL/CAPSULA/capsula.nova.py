@@ -1,46 +1,85 @@
-# python "C:\Users\Instrutor\Documents\GitHub\ONSTAGE-26-27\NACIONAL\CAPSULA\capsula.nova.py"     
+# python "C:\Users\Instrutor\Documents\GitHub\ONSTAGE-26-27\NACIONAL\CAPSULA\capsula.nova.py"
 
+import time
 import sounddevice as sd
 import numpy as np
 import serial
-import time
 
 PORTA_SERIAL = "COM7"
+DISPOSITIVO_MIC = 1
 
-duracao = 0.2
-limite = 0.4
+AMOSTRAGEM = 44100
+DURACAO_BLOCO = 0.1
+
+# Limite inicial para ignorar ruídos baixos.
+# Vamos ajustar depois de observar os valores em silêncio.
+
+# Detecção inicial mais estável
+LIMITE_RMS = 0.03
+BLOCOS_NECESSARIOS = 3
+INTERVALO_GRITOS = 2.0
+
+contagem = 0
 ultimo_grito = 0
-intervalo_gritos = 2.0
-
-print(sd.query_devices())
 
 try:
     with serial.Serial(PORTA_SERIAL, 9600, timeout=1) as arduino:
         print("A ligar ao Arduino...")
         time.sleep(2)
+        arduino.reset_input_buffer()
+
         print("Arduino ligado!")
+        print("A ouvir o microfone...")
 
-        while True:
-            audio = sd.rec(
-                int(duracao * 44100),
-                samplerate=44100,
-                channels=1
-            )
-            sd.wait()
+        with sd.InputStream(
+            device=DISPOSITIVO_MIC,
+            samplerate=AMOSTRAGEM,
+            channels=1,
+            dtype="float32",
+            blocksize=int(DURACAO_BLOCO * AMOSTRAGEM)
+        ) as mic:
 
-            rms = np.sqrt(np.mean(audio ** 2))
-            print("RMS:", rms)
+            while True:
+                audio, overflowed = mic.read(
+                    int(DURACAO_BLOCO * AMOSTRAGEM)
+                )
 
-            agora = time.time()
+                rms = float(np.sqrt(np.mean(audio ** 2)))
+                agora = time.time()
 
-            if rms >= limite and agora - ultimo_grito >= intervalo_gritos:
-                print("GRITO DETECTADO")
-                arduino.write(b'GRITO')
-                ultimo_grito = agora
+                print(f"RMS: {rms:.5f}")
+
+                if rms >= LIMITE_RMS:
+                    contagem += 1
+                else:
+                    contagem = 0
+
+                if (
+                    contagem >= BLOCOS_NECESSARIOS
+                    and agora - ultimo_grito >= INTERVALO_GRITOS
+                ):
+                    print("GRITO DETECTADO!")
+
+                    arduino.write(b"G")
+                    arduino.flush()
+
+                    resposta = arduino.readline().decode(
+                        "utf-8", errors="ignore"
+                    ).strip()
+
+                    if resposta == "GRITO RECEBIDO":
+                        print("Arduino confirmou a receção!")
+                    else:
+                        print(
+                            "Sem confirmação do Arduino. "
+                            f"Resposta: {resposta!r}"
+                        )
+
+                    ultimo_grito = time.time()
+                    contagem = 0
 
 except KeyboardInterrupt:
     print("\nPrograma terminado.")
 
 except Exception as erro:
     print("Erro:", erro)
-
