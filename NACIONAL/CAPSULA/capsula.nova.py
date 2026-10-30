@@ -1,5 +1,6 @@
 # python "C:\Users\Instrutor\Documents\GitHub\ONSTAGE-26-27\NACIONAL\CAPSULA\capsula.nova.py"
 
+
 import time
 import sounddevice as sd
 import numpy as np
@@ -15,8 +16,10 @@ DURACAO_BLOCO = 0.1
 # Vamos ajustar depois de observar os valores em silêncio.
 
 # Detecção inicial mais estável
-LIMITE_RMS = 0.03
-BLOCOS_NECESSARIOS = 3
+LIMITE_RMS = 0.20
+BLOCOS_NECESSARIOS = 6
+print("LIMITE ATIVO:", LIMITE_RMS)
+print("BLOCOS NECESSÁRIOS:", BLOCOS_NECESSARIOS)
 INTERVALO_GRITOS = 2.0
 
 contagem = 0
@@ -30,6 +33,9 @@ try:
 
         print("Arduino ligado!")
         print("A ouvir o microfone...")
+        print("ARQUIVO: capsula.nova.py")
+        print(f"LIMITE RMS ATIVO: {LIMITE_RMS}")
+        print(f"BLOCOS NECESSÁRIOS: {BLOCOS_NECESSARIOS}")
 
         with sd.InputStream(
             device=DISPOSITIVO_MIC,
@@ -48,11 +54,15 @@ try:
                 agora = time.time()
 
                 print(f"RMS: {rms:.5f}")
+                print("CONTAGEM ATUAL:", contagem)
+                if rms >= LIMITE_RMS:
+                 print("ACIMA DO LIMITE CONFIGURADO!")
 
                 if rms >= LIMITE_RMS:
                     contagem += 1
+                    print(f"Som acima do limite! Blocos: {contagem}/6")
                 else:
-                    contagem = 0
+                   contagem = 0
 
                 if (
                     contagem >= BLOCOS_NECESSARIOS
