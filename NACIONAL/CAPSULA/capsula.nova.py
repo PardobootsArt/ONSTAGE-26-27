@@ -1,6 +1,5 @@
 # python "C:\Users\Instrutor\Documents\GitHub\ONSTAGE-26-27\NACIONAL\CAPSULA\capsula.nova.py"
 
-
 import time
 import sounddevice as sd
 import numpy as np
@@ -17,7 +16,7 @@ DURACAO_BLOCO = 0.1
 
 # Detecção inicial mais estável
 LIMITE_RMS = 0.20
-BLOCOS_NECESSARIOS = 6
+BLOCOS_NECESSARIOS = 4
 print("LIMITE ATIVO:", LIMITE_RMS)
 print("BLOCOS NECESSÁRIOS:", BLOCOS_NECESSARIOS)
 INTERVALO_GRITOS = 2.0
@@ -60,7 +59,7 @@ try:
 
                 if rms >= LIMITE_RMS:
                     contagem += 1
-                    print(f"Som acima do limite! Blocos: {contagem}/6")
+                    print(f"Som acima do limite! Blocos: {contagem}/{BLOCOS_NECESSARIOS}")
                 else:
                    contagem = 0
 
