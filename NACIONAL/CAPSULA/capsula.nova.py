@@ -15,8 +15,8 @@ DURACAO_BLOCO = 0.1
 # Vamos ajustar depois de observar os valores em silêncio.
 
 # Detecção inicial mais estável
-LIMITE_RMS = 0.20
-BLOCOS_NECESSARIOS = 4
+LIMITE_RMS = 0.25
+BLOCOS_NECESSARIOS = 5
 print("LIMITE ATIVO:", LIMITE_RMS)
 print("BLOCOS NECESSÁRIOS:", BLOCOS_NECESSARIOS)
 INTERVALO_GRITOS = 2.0
