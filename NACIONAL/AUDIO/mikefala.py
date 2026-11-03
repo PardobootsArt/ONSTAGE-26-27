@@ -31,21 +31,30 @@ palavras_chave = {
         "numero": 1
     },
     "mamae": {
-        "audio": "seboso.mp3",
+        "audio": "ofende, mas não assassina o português.mp3",
         "numero": 2
     },
+     "bravo": {
+            "audio": "seboso.mp3",
+            "numero": 3
+        },
     "galera": {
-        "audio": "comovai.mp3",
-        "numero": 3
-    },
-    "oi": {
-        "audio": "Bom dia assustar.mp3",
+        "audio": "ze mané.mp3",
         "numero": 4
     },
-    "cumprida": {
-        "audio": "comemoração.mp3",
+    "respeito": {
+        "audio": "bom dia assustar.mp3",
         "numero": 5
-    }
+    },
+    "artista": {
+        "audio": "tudo bem ta na hora.mp3",
+        "numero": 6
+    },
+    "cumprida": {
+            "audio": "comemoração.mp3",
+            "numero": 7
+        }
+
 }
 
 

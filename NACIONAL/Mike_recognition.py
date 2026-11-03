@@ -58,6 +58,8 @@ while True:
     
     tag_detectada = False
 
+    posicao = 0
+
     for tag in tags:
         # Pega os cantos da tag para desenhar o retângulo
         corners = tag.corners.astype(int)
@@ -99,16 +101,41 @@ while True:
             # Erro de distância.
             erro_distancia = DISTANCIA_DESEJADA - tagLength
             
+            # NOVO: calcular a posição dos olhos do MIke
+            posicaoX = largura // 3
+            posicaoY = altura // 3
+
+            coluna = min(cx * 3 // largura, 2)
+            linha = min(cy * 3 // altura, 2)
+
+            posicao_olhos = coluna * 3 + linha + 1
+
+
+            # NOVA FUNÇÃO: DIVISÃO DA TELA EM 9 REGIÕES
+            posicaoX = largura // 3
+            posicaoY = altura // 3
+
+            cv2.line(frame, (posicaoX, 0),
+             (posicaoX, altura), (255, 130, 171), 2)
+            cv2.line(frame, (posicaoX * 2, 0),
+             (posicaoX * 2, altura), (255, 130, 171), 2)
+            cv2.line(frame, (0, posicaoY),
+             (largura, posicaoY), (255, 130, 171), 2)
+            cv2.line(frame, (0, posicaoY * 2),
+             (largura, posicaoY * 2), (255, 130, 171), 2)
+            
             print("TAG 0")
-            mensagem = f"{tag.tag_id},{erro_x},{erro_distancia:.2f},0\n"
+
+            # Envia os dados de locomoção + posição dos olhos
+            mensagem = f"{tag.tag_id},{erro_x},{erro_distancia:.2f},{posicao_olhos}\n"
             arduino.write(mensagem.encode())
 
+            print(f"Posição dos olhos: {posicao_olhos}")
             print("-------------------------------------")
             print("Mensagem enviada ao Arduino:")
-
             print(mensagem.strip())
-
             print("-------------------------------------")
+
 
         elif tag.tag_id == 2:
             tag_detectada = True
@@ -136,7 +163,7 @@ while True:
 
             # Erro de distância.
             erro_distancia = DISTANCIA_DESEJADA - tagLength
-
+            
             razao = tagWidth / tagHeight
             erro_Perspectiva = (1 - razao) * np.sign(erro_x)
 
@@ -241,10 +268,10 @@ while True:
                      arduino.write(mensagem.encode())
             
 
-    if not tag_detectada:
-        mensagem = "-1,0,0,0\n"
-        arduino.write(mensagem.encode())
-        print("Nenhuma tag detectada.")
+        if not tag_detectada:
+         mensagem = "-1,0,0,0\n"
+         arduino.write(mensagem.encode())
+         print("Nenhuma tag detectada.")
 
     # Mostra a imagem na janela do computador
     cv2.imshow("Rastreamento de Tag", frame)
