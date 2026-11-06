@@ -26,35 +26,65 @@ CAMINHO_MODELO = r"C:\Users\Aluno\Documents\GitHub\ONSTAGE-26-27\NACIONAL\AUDIO\
 # ==========================================
 
 palavras_chave = {
+
+    "primeiro": {
+        "audio": "semsom_.mp3",
+        "numero": 1
+    },
     "hoje": {
         "audio": "rosto na TV.mp3",
-        "numero": 1
+        "numero": 2
     },
     "mamae": {
         "audio": "ofende, mas não assassina o português.mp3",
-        "numero": 2
+        "numero": 3
+        
     },
      "bravo": {
-            "audio": "seboso.mp3",
-            "numero": 3
-        },
+        "audio": "seboso.mp3",
+        "numero": 4   
+    },
     "galera": {
         "audio": "ze mané.mp3",
-        "numero": 4
+        "numero": 5
     },
     "respeito": {
         "audio": "bom dia assustar.mp3",
-        "numero": 5
+        "numero": 6
     },
     "artista": {
         "audio": "tudo bem ta na hora.mp3",
-        "numero": 6
+        "numero": 7
+    },
+    "objetivo": {
+        "audio": "semsom_.mp3",
+        "numero": 8
+    },
+     "cartão": {
+        "audio": "semsom_.mp3",
+        "numero": 9
+    },
+     "paredes": {
+        "audio": "semsom_.mp3",
+        "numero": 10
+    },    
+   
+    "habilidade": {
+        "audio": "semsom_.mp3",
+        "numero": 11
+    },
+    "tres": {
+        "audio": "semsom_.mp3",
+        "numero": 12
+    },
+    "funcionou": {
+        "audio": "semsom_.mp3",
+        "numero": 13
     },
     "cumprida": {
-            "audio": "comemoração.mp3",
-            "numero": 7
-        }
-
+        "audio": "comemoração.mp3",
+        "numero": 14
+    }
 }
 
 
