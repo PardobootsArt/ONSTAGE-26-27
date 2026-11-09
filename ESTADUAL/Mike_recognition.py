@@ -1,3 +1,5 @@
+# py -3.13 "c:/Users/Aluno/Documents/GitHub/ONSTAGE-26-27/ESTADUAL/Mike_recognition.py"
+
 from typing import Literal
 
 import cv2
@@ -22,7 +24,8 @@ at_detector = Detector(families='tag36h11',
 # -----------------------------
 
 
-porta_arduino = "/dev/ttyUSB0"
+#porta_arduino = "/dev/ttyUSB0"
+porta_arduino = "COM8"
 
 try:
     arduino = serial.Serial(porta_arduino, 9600, timeout=1)
@@ -74,16 +77,12 @@ while True:
 
         if tag.tag_id == 0:
             tag_detectada = True
-
             tagWidth = np.linalg.norm(corners[0] - corners[1])
             tagHeight = np.linalg.norm(corners[1] - corners[2])
-            
             # Calcula a diagonal (Pitágoras)
-            tagLength = math.sqrt((tagWidth ** 2) + (tagHeight ** 2))
-            
+            tagLength = math.sqrt((tagWidth ** 2) + (tagHeight ** 2))      
             # Desenha a linha lilás do centro da tag até o centro da tela
-            cv2.line(frame, (cx, cy), (centro_tela_x, centro_tela_y), (255, 130, 171), 2)
-            
+            cv2.line(frame, (cx, cy), (centro_tela_x, centro_tela_y), (255, 130, 171), 2)  
             # Desenha o círculo azul no centro da tela
             cv2.circle(frame, (centro_tela_x, centro_tela_y), 6, (255, 144, 30), -1)
 
