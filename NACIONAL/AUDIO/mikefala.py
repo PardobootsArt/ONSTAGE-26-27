@@ -7,6 +7,7 @@ import unicodedata
 import socket
 import threading
 
+
 import sounddevice as sd
 import pygame
 from vosk import Model, KaldiRecognizer
@@ -60,20 +61,20 @@ palavras_chave = {
         "audio": "semsom_.mp3",
         "numero": 8
     },
-     "cartão": {
+     "cracha": {
         "audio": "semsom_.mp3",
         "numero": 9
     },
-     "paredes": {
+     "trabalho": {
         "audio": "semsom_.mp3",
         "numero": 10
     },    
    
-    "habilidade": {
+    "habilidades": {
         "audio": "semsom_.mp3",
         "numero": 11
     },
-    "tres": {
+    "forte": {
         "audio": "semsom_.mp3",
         "numero": 12
     },
