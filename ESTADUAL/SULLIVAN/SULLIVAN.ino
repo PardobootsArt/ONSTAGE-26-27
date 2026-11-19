@@ -36,8 +36,8 @@ int contagemObjeto;
 int repeticao;
 
 //===========CORREÇÃO===========
-float Kp = 1.2;
-float Kd = 0.05;
+float Kp = 1.6;
+float Kd = 0.1;
 float anguloReferencia = 0;
 float ultimoErro = 0;
 unsigned long ultimoControle = 0;
@@ -655,25 +655,25 @@ void loop() {
         repeticao++;
         delay(2500);
 
-        direita(150, 9150);
+        direita(150, 13150);
 
         pararMotores();
 
         delay(500);
 
-        frente(150, 1250);
+        frente(150, 3250);
 
         delay(1000);
 
         // PROCURA OS 2 OBJETOS
 
-        while (contagemObjeto < 2) {
+        while (contagemObjeto < 4) {
 
           int grauss = procurarObjeto();
 
           if (grauss != -1) {
 
-            int tempo = (calcularTempo(grauss)) * 50;
+            int tempo = (calcularTempo(grauss)) * 70;
 
             if (grauss > 90) {
 
@@ -690,7 +690,7 @@ void loop() {
               Serial.println(tempo);
 
               if (frenteLivre() == true) {
-                if (contagemObjeto == 2) {
+                if (contagemObjeto == 4) {
 
                   frente(150, 3400);
                 } else {
@@ -717,7 +717,7 @@ void loop() {
 
               if (frenteLivre() == true) {
 
-                if (contagemObjeto == 2) {
+                if (contagemObjeto == 4) {
 
                   frente(150, 3400);
                 } else {
@@ -773,7 +773,6 @@ void loop() {
       }
     }
   }
-
 
   // Enquanto não receber o sinal
   if (!iniciarSullivan) {

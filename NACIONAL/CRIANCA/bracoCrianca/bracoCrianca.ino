@@ -1,3 +1,29 @@
+// =============== STEPPER ==============
+#include <AccelStepper.h>
+
+#define STEP_PIN 10 //AMARELO
+#define DIR_PIN 11 //AZUL
+const int PASSOS_POR_VOLTA = 200;
+const int MICROSTEP = 1;
+
+AccelStepper motor(AccelStepper::DRIVER, STEP_PIN, DIR_PIN);
+
+void enrolar(float voltas) {
+  long passos = voltas * PASSOS_POR_VOLTA * MICROSTEP;
+
+  motor.move(passos);
+  motor.runToPosition();
+}
+void desenrolar(float voltas) {
+
+  long passos = -voltas * PASSOS_POR_VOLTA * MICROSTEP;
+
+  motor.move(passos);
+  motor.runToPosition();
+}
+
+// ============== SERVO =================
+
 #include <Servo.h>
 Servo direito;
 Servo esquerdo;
@@ -31,7 +57,7 @@ void palpebras(int abrir, int fechar) {
 }
 
 void setup() {
-  // put your setup code here, to run once:
+  /*
   Serial.begin(9600);
   direito.attach(12);//baixo=180 alto=0
   esquerdo.attach(13);//baixo=0 alto=180
@@ -44,11 +70,16 @@ void setup() {
 
   pinMode(pescoco1, OUTPUT);
   pinMode(pescoco2, OUTPUT);
-  delay(1500);
-  palpebras(1,-1);
+  */
+  motor.setMaxSpeed(400);
+  motor.setAcceleration(200);
 }
 
 void loop() {
+  
+  delay(1500);
+  desenrolar(8);
+  /*
   //direita
   digitalWrite(pescoco1, HIGH);
   digitalWrite(pescoco2, LOW);
@@ -70,5 +101,5 @@ void loop() {
   direito.write(180);
   esquerdo.write(0);
   delay(1000);
-
+  */
 }
