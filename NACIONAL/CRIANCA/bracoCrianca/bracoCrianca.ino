@@ -57,7 +57,6 @@ void palpebras(int abrir, int fechar) {
 }
 
 void setup() {
-  /*
   Serial.begin(9600);
   direito.attach(12);//baixo=180 alto=0
   esquerdo.attach(13);//baixo=0 alto=180
@@ -70,16 +69,11 @@ void setup() {
 
   pinMode(pescoco1, OUTPUT);
   pinMode(pescoco2, OUTPUT);
-  */
   motor.setMaxSpeed(400);
   motor.setAcceleration(200);
 }
 
 void loop() {
-  
-  delay(1500);
-  desenrolar(8);
-  /*
   //direita
   digitalWrite(pescoco1, HIGH);
   digitalWrite(pescoco2, LOW);
@@ -101,5 +95,5 @@ void loop() {
   direito.write(180);
   esquerdo.write(0);
   delay(1000);
-  */
+
 }

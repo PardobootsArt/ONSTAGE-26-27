@@ -52,7 +52,7 @@ bool primeiraAtualizacao = false;
 #define ENAF 9
 #define ENBF 8
 
-const int velocidadeMotor = 100;
+const int velocidadeMotor = 130;
 
 const int MPU = 0x68;
 
@@ -209,8 +209,6 @@ void setup() {
   pinMode(INF3, OUTPUT);
   pinMode(INF4, OUTPUT);
 
-  pararMotores();
-
   iniciarMPU();
   Serial.println("MPU pronto!");
 
@@ -262,6 +260,7 @@ void loop() {
     analogWrite(ENBF, velDir);
 
     ultimoErro = erro;
+    Serial.println(erro);
     /*
     if (!transicaoAtiva && millis() - ultimaLeitura >= intervaloSensor) {
 
