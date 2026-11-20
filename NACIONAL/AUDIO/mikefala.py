@@ -6,7 +6,8 @@ import queue
 import unicodedata
 import socket
 import threading
-
+import serial
+import time
 
 import sounddevice as sd
 import pygame
@@ -20,6 +21,30 @@ from vosk import Model, KaldiRecognizer
 PASTA_AUDIOS = r"C:\Users\Aluno\Documents\GitHub\ONSTAGE-26-27\NACIONAL\AUDIO\AUDIO"
 
 CAMINHO_MODELO = r"C:\Users\Aluno\Documents\GitHub\ONSTAGE-26-27\NACIONAL\AUDIO\vosk-model-small-pt-0.3"
+
+# ==========================================
+# CONFIGURAÇÃO DO ARDUINO
+# ==========================================
+
+PORTA_ARDUINO = "COM7"  # Altere para a porta do seu Mega
+BAUD_ARDUINO = 9600
+
+arduino = None
+
+try:
+    arduino = serial.Serial(
+        PORTA_ARDUINO,
+        BAUD_ARDUINO,
+        timeout=1
+    )
+
+    # O Mega pode reiniciar quando a conexão serial é aberta
+    time.sleep(2)
+
+    print(f"Arduino conectado na porta {PORTA_ARDUINO}!")
+
+except serial.SerialException as erro:
+    print(f"ERRO ao conectar com o Arduino: {erro}")
 
 
 # ==========================================
@@ -41,7 +66,7 @@ palavras_chave = {
         "numero": 3
         
     },
-     "bravo": {
+     "comigo": {
         "audio": "seboso.mp3",
         "numero": 4   
     },
@@ -223,6 +248,37 @@ def enviar_comandos():
 
                 print("Aguardando o Unity se reconectar...")
 
+# ==========================================
+# ENVIO DE COMANDOS AO ARDUINO
+# ==========================================
+
+
+def enviar_arduino(comando):
+    if arduino is None or not arduino.is_open:
+        print("Arduino não está conectado!")
+        return
+
+    try:
+        # Limpa respostas antigas
+        arduino.reset_input_buffer()
+
+        # Envia o comando
+        mensagem = f"{comando}\n"
+        arduino.write(mensagem.encode("utf-8"))
+
+        print(f"Enviado ao Arduino: {comando}")
+
+        # Aguarda a confirmação
+        resposta = arduino.readline().decode("utf-8").strip()
+
+        if resposta:
+            print("Arduino confirmou:", resposta)
+        else:
+            print("Arduino não respondeu!")
+
+    except serial.SerialException as erro:
+        print("Erro na comunicação:", erro)
+
 
 # ==========================================
 # VERIFICAÇÃO DOS ARQUIVOS
@@ -333,6 +389,12 @@ try:
 
             numero = dados_palavra["numero"]
             arquivo = dados_palavra["audio"]
+            # Envia comandos específicos ao Arduino
+            if palavra_encontrada == "habilidades":
+                enviar_arduino(11)
+
+            elif palavra_encontrada == "forte":
+                enviar_arduino(12)
 
             # 1. Coloca o comando na fila de envio ao Unity
             mensagem = f"PALAVRA:{numero}\n"
@@ -364,6 +426,10 @@ finally:
         servidor.close()
     except OSError:
         pass
+
+    if arduino is not None and arduino.is_open:
+        arduino.close()
+    print("Conexão com Arduino encerrada.")
 
     pygame.mixer.quit()
     print("Programa finalizado.")

@@ -1,8 +1,8 @@
 // =============== STEPPER ==============
 #include <AccelStepper.h>
 
-#define STEP_PIN 10 //AMARELO
-#define DIR_PIN 11 //AZUL
+#define STEP_PIN 10  //AMARELO
+#define DIR_PIN 11   //AZUL
 const int PASSOS_POR_VOLTA = 200;
 const int MICROSTEP = 1;
 
@@ -58,8 +58,10 @@ void palpebras(int abrir, int fechar) {
 
 void setup() {
   Serial.begin(9600);
-  direito.attach(12);//baixo=180 alto=0
-  esquerdo.attach(13);//baixo=0 alto=180
+  Serial.setTimeout(100);
+  Serial.println("ARDUINO PRONTO");
+  direito.attach(12);   //baixo=180 alto=0
+  esquerdo.attach(13);  //baixo=0 alto=180
 
   olhoEsqC.attach(3);
   olhoEsqB.attach(4);
@@ -69,31 +71,86 @@ void setup() {
 
   pinMode(pescoco1, OUTPUT);
   pinMode(pescoco2, OUTPUT);
-  motor.setMaxSpeed(400);
-  motor.setAcceleration(200);
+  motor.setMaxSpeed(1000);
+  motor.setAcceleration(400);
+  delay(1000);
+  palpebras(-1, 1);
+  direito.write(180);
+  esquerdo.write(0);
 }
 
 void loop() {
-  //direita
-  digitalWrite(pescoco1, HIGH);
-  digitalWrite(pescoco2, LOW);
-  delay(450);
-  digitalWrite(pescoco1, LOW);
-  digitalWrite(pescoco2, LOW);
-  direito.write(0);
-  esquerdo.write(180);
-  palpebras(-1,1);
-  delay(1000);
-  palpebras(1,-1);
-  //esquerda
-  digitalWrite(pescoco2, HIGH);
-  digitalWrite(pescoco1, LOW);
-  delay(450);
-  digitalWrite(pescoco1, LOW);
-  digitalWrite(pescoco2, LOW);
-  delay(150);
-  direito.write(180);
-  esquerdo.write(0);
-  delay(1000);
+  if (Serial.available() > 0) {
+    String comando = Serial.readStringUntil('\n');
+    comando.trim();
 
+    if (comando == "11") {
+      Serial.println("CONFIRMADO: HABILIDADES");
+      palpebras(1, -1);
+      enrolar(14);
+      delay(1500);
+      digitalWrite(pescoco2, HIGH);
+      digitalWrite(pescoco1, LOW);
+      delay(300);
+      digitalWrite(pescoco1, LOW);
+      digitalWrite(pescoco2, LOW);
+      delay(2100);
+      digitalWrite(pescoco1, HIGH);
+      digitalWrite(pescoco2, LOW);
+      delay(300);
+      digitalWrite(pescoco1, LOW);
+      digitalWrite(pescoco2, LOW);
+      delay(1400);
+      palpebras(-1, 1);
+      delay(400);
+      palpebras(1, -1);
+      delay(350);
+      digitalWrite(pescoco2, HIGH);
+      digitalWrite(pescoco1, LOW);
+      delay(300);
+      digitalWrite(pescoco1, LOW);
+      digitalWrite(pescoco2, LOW);
+      delay(500);
+      palpebras(-1, 1);
+      delay(400);
+      palpebras(1, -1);
+      delay(350);
+      digitalWrite(pescoco1, HIGH);
+      digitalWrite(pescoco2, LOW);
+      delay(300);
+      digitalWrite(pescoco1, LOW);
+      digitalWrite(pescoco2, LOW);
+      delay(700);
+      desenrolar(14);
+      palpebras(-1, 1);
+    }
+
+    else if (comando == "12") {
+      Serial.println("CONFIRMADO: DOIS");
+      palpebras(1, -1);
+      enrolar(14);
+      delay(200);
+      direito.write(0);
+      esquerdo.write(180);
+      for (int i = 0; i < 6; i++) {
+        digitalWrite(pescoco2, HIGH);
+        digitalWrite(pescoco1, LOW);
+        delay(300);
+        digitalWrite(pescoco1, LOW);
+        digitalWrite(pescoco2, LOW);
+        direito.write(60);
+        delay(150);
+        esquerdo.write(120);
+        delay(250);
+
+        digitalWrite(pescoco1, HIGH);
+        digitalWrite(pescoco2, LOW);
+        delay(300);
+        digitalWrite(pescoco1, LOW);
+        digitalWrite(pescoco2, LOW);
+        direito.write(0);
+        esquerdo.write(180);
+      }
+    }
+  }
 }
