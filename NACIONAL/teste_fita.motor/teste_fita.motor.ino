@@ -20,7 +20,7 @@ Adafruit_TCS34725 tcs = Adafruit_TCS34725(
 
 //CRGB leds[NUM_LEDS];
 
-int velocidade = 40;
+int velocidade = 15;
 //CRGB corAlvo = CRGB(255, 0, 200);
 
 int indiceLED = NUM_LEDS - 1;
@@ -52,7 +52,7 @@ bool primeiraAtualizacao = false;
 #define ENAF 9
 #define ENBF 8
 
-const int velocidadeMotor = 130;
+const int velocidadeMotor = 70;
 
 const int MPU = 0x68;
 
@@ -63,8 +63,8 @@ float offsetGz = 0;
 
 float ultimoErro = 0;
 
-float Kp = 4.0;
-float Kd = 1.5;
+float Kp = 14.0;
+float Kd = 6.0;
 float ang;
 
 // ======================================
