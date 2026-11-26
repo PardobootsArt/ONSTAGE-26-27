@@ -36,11 +36,11 @@ int contagemObjeto;
 int repeticao;
 
 //===========CORREÇÃO===========
-float Kp = 1.6;
-float Kd = 0.1;
-float anguloReferencia = 0;
+float Kp = 10;
+float Kd = 3;
 float ultimoErro = 0;
 unsigned long ultimoControle = 0;
+float angRef = 0;
 
 //==============FUNÇÕES DA PROGRAMAÇÃO==========================
 
@@ -292,6 +292,9 @@ void setup() {
 
   iniciarMPU();
 
+  ultimoErro = 0;
+  ultimoControle = millis();
+
   Serial.println("MPU pronto!");
 
   //=========MOVIMENTAÇÃO==========
@@ -367,9 +370,7 @@ void setup() {
 
 float correcao() {
 
-  float ang = obterAngulo();
-
-  float erro = anguloReferencia - ang;
+  float erro = obterAngulo();
 
   unsigned long agora = millis();
 
@@ -416,11 +417,6 @@ void pararMotores() {
 
 void esquerda(int velo, int tempoMs) {
 
-  anguloReferencia = obterAngulo();
-
-  ultimoErro = 0;
-  ultimoControle = millis();
-
   unsigned long inicio = millis();
 
   while (millis() - inicio < tempoMs) {
@@ -436,8 +432,8 @@ void esquerda(int velo, int tempoMs) {
     analogWrite(enbEF, velEsq);
     analogWrite(enbDF, velEsq);
 
-    analogWrite(enbET, velDir);
-    analogWrite(enbDT, velDir);
+    analogWrite(enbET, velDir - 20);
+    analogWrite(enbDT, velDir - 20);
 
     digitalWrite(motorEF1, HIGH);
     digitalWrite(motorEF2, LOW);
@@ -450,7 +446,71 @@ void esquerda(int velo, int tempoMs) {
 
     digitalWrite(motorDT1, LOW);
     digitalWrite(motorDT2, HIGH);
+    Serial.print("velEsq: ");
+    Serial.print(velEsq);
+    Serial.print(" velDir: ");
+    Serial.print(velDir);
+    Serial.print(" correcao: ");
+    Serial.println(c);
   }
+  /*
+  angRef = obterAngulo();
+  while (angRef > 1 || angRef < -1) {
+    if (angRef > 1) {
+      float c = correcao();
+
+      float velDir = velo + c;
+      float velEsq = velo - c;
+
+      velEsq = constrain(velEsq, 0, 255);
+      velDir = constrain(velDir, 0, 255);
+
+      analogWrite(enbEF, velEsq);
+      analogWrite(enbDF, velEsq);
+
+      analogWrite(enbET, velDir);
+      analogWrite(enbDT, velDir);
+
+      digitalWrite(motorEF1, HIGH);
+      digitalWrite(motorEF2, LOW);
+
+      digitalWrite(motorDF1, HIGH);
+      digitalWrite(motorDF2, LOW);
+
+      digitalWrite(motorET1, HIGH);
+      digitalWrite(motorET2, LOW);
+
+      digitalWrite(motorDT1, HIGH);
+      digitalWrite(motorDT2, LOW);
+
+    } else if (angRef < -1) {
+      float c = correcao();
+
+      float velDir = velo + c;
+      float velEsq = velo - c;
+
+      velEsq = constrain(velEsq, 0, 255);
+      velDir = constrain(velDir, 0, 255);
+
+      analogWrite(enbEF, velEsq);
+      analogWrite(enbDF, velEsq);
+
+      analogWrite(enbET, velDir);
+      analogWrite(enbDT, velDir);
+
+      digitalWrite(motorEF1, LOW);
+      digitalWrite(motorEF2, HIGH);
+
+      digitalWrite(motorDF1, LOW);
+      digitalWrite(motorDF2, HIGH);
+
+      digitalWrite(motorET1, LOW);
+      digitalWrite(motorET2, HIGH);
+
+      digitalWrite(motorDT1, LOW);
+      digitalWrite(motorDT2, HIGH);
+    }
+  }*/
 
   pararMotores();
 }
@@ -460,11 +520,6 @@ void esquerda(int velo, int tempoMs) {
 //===============================================
 
 void direita(int velo, int tempoMs) {
-
-  anguloReferencia = obterAngulo();
-
-  ultimoErro = 0;
-  ultimoControle = millis();
 
   unsigned long inicio = millis();
 
@@ -495,6 +550,12 @@ void direita(int velo, int tempoMs) {
 
     digitalWrite(motorDT1, HIGH);
     digitalWrite(motorDT2, LOW);
+    Serial.print("velEsq: ");
+    Serial.print(velEsq);
+    Serial.print(" velDir: ");
+    Serial.print(velDir);
+    Serial.print(" correcao: ");
+    Serial.println(c);
   }
 
   pararMotores();
@@ -505,11 +566,6 @@ void direita(int velo, int tempoMs) {
 //===============================================
 
 void frente(int velo, int tempoMs) {
-
-  anguloReferencia = obterAngulo();
-
-  ultimoErro = 0;
-  ultimoControle = millis();
 
   unsigned long inicio = millis();
 
@@ -540,6 +596,12 @@ void frente(int velo, int tempoMs) {
 
     digitalWrite(motorDT1, HIGH);
     digitalWrite(motorDT2, LOW);
+    Serial.print("velEsq: ");
+    Serial.print(velEsq);
+    Serial.print(" velDir: ");
+    Serial.print(velDir);
+    Serial.print(" correcao: ");
+    Serial.println(c);
   }
 
   pararMotores();
@@ -550,11 +612,6 @@ void frente(int velo, int tempoMs) {
 //===============================================
 
 void tras(int velo, int tempoMs) {
-
-  anguloReferencia = obterAngulo();
-
-  ultimoErro = 0;
-  ultimoControle = millis();
 
   unsigned long inicio = millis();
 
@@ -632,10 +689,6 @@ bool frenteLivre() {
 //===============================================
 
 void loop() {
-  // ==========================
-  // ESP B -> Sullivan
-  // ==========================
-
   if (!iniciarSullivan && Serial2.available()) {
 
     String mensagem = Serial2.readStringUntil('\n');
@@ -643,6 +696,10 @@ void loop() {
 
     Serial.print("Recebido da ESP B: ");
     Serial.println(mensagem);
+    meuServo.write(45);
+    delay(500);
+    meuServo.write(90);
+
 
     if (mensagem == "1") {
 
@@ -655,13 +712,13 @@ void loop() {
         repeticao++;
         delay(2500);
 
-        direita(150, 13150);
+        direita(250, 12000);
 
         pararMotores();
 
         delay(500);
 
-        frente(150, 3250);
+        frente(150, 5250);
 
         delay(1000);
 
@@ -673,7 +730,7 @@ void loop() {
 
           if (grauss != -1) {
 
-            int tempo = (calcularTempo(grauss)) * 70;
+            int tempo = (calcularTempo(grauss)) * 55;
 
             if (grauss > 90) {
 
@@ -690,12 +747,8 @@ void loop() {
               Serial.println(tempo);
 
               if (frenteLivre() == true) {
-                if (contagemObjeto == 4) {
 
-                  frente(150, 3400);
-                } else {
-                  frente(150, 5200);
-                }
+                frente(150, 8500);
 
                 pararMotores();
               }
@@ -717,12 +770,9 @@ void loop() {
 
               if (frenteLivre() == true) {
 
-                if (contagemObjeto == 4) {
+                frente(150, 8500);
 
-                  frente(150, 3400);
-                } else {
-                  frente(150, 5200);
-                }
+                pararMotores();
               }
             }
           }
@@ -743,7 +793,7 @@ void loop() {
         while (contagemObjeto > 1) {
           Serial.println("entrei");
           int distancia = lerDistancia();
-          if (distancia > 0 && distancia < 15) {
+          if (distancia > 0 && distancia < 30) {
             Serial.println("levantei");
             analogWrite(enbracoE, 120);
             analogWrite(enbracoD, 120);
@@ -777,7 +827,123 @@ void loop() {
   // Enquanto não receber o sinal
   if (!iniciarSullivan) {
 
-    pararMotores();  // ou sua função equivalente
+    int dista = lerDistancia();
+    if (dista > 0 && dista < 10) {
+      if (repeticao == 0) {
+
+        repeticao++;
+        delay(2500);
+
+        direita(250, 12000);
+
+        pararMotores();
+
+        delay(500);
+
+        frente(150, 5250);
+
+        delay(1000);
+
+        // PROCURA OS 2 OBJETOS
+
+        while (contagemObjeto < 4) {
+
+          int grauss = procurarObjeto();
+
+          if (grauss != -1) {
+
+            int tempo = (calcularTempo(grauss)) * 55;
+
+            if (grauss > 90) {
+
+              // Objeto na esquerda -> virar para a direita
+
+              contagemObjeto++;
+
+              direita(150, tempo);
+
+              pararMotores();
+
+              delay(200);
+
+              Serial.println(tempo);
+
+              if (frenteLivre() == true) {
+
+                frente(150, 8500);
+
+                pararMotores();
+              }
+            }
+
+            else if (grauss < 90) {
+
+              // Objeto na direita -> virar para a esquerda
+
+              contagemObjeto++;
+
+              esquerda(150, tempo);
+
+              pararMotores();
+
+              delay(200);
+
+              Serial.println(tempo);
+
+              if (frenteLivre() == true) {
+
+                frente(150, 8500);
+
+                pararMotores();
+              }
+            }
+          }
+
+          else if (varreduraCompleta) {
+
+            frente(110, 200);
+
+            varreduraCompleta = false;
+          }
+        }
+
+        //==========================================
+        // ENCONTROU OS 2 OBJETOS
+        //==========================================
+
+        bool levantarBracos = false;
+        while (contagemObjeto > 1) {
+          Serial.println("entrei");
+          int distancia = lerDistancia();
+          if (distancia > 0 && distancia < 30) {
+            Serial.println("levantei");
+            analogWrite(enbracoE, 120);
+            analogWrite(enbracoD, 120);
+            digitalWrite(bracoE1, HIGH);
+            digitalWrite(bracoE2, LOW);
+            digitalWrite(bracoD1, HIGH);
+            digitalWrite(bracoD2, LOW);
+            delay(450);
+            digitalWrite(bracoE1, LOW);
+            digitalWrite(bracoE2, LOW);
+            delay(50);
+            digitalWrite(bracoD1, LOW);
+            digitalWrite(bracoD2, LOW);
+          }
+          //==========================================
+          // LEVANTA OS DOIS BRAÇOS
+          //==========================================
+
+          // Não inicia novamente
+          repeticao = 1;
+        }
+      }
+
+      else {
+        // Sem objeto: permanece parado.
+        pararMotores();
+      }
+    }  // ou sua função equivalente
 
     return;
   }

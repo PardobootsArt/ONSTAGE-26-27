@@ -57,7 +57,7 @@ palavras_chave = {
         "audio": "semsom_.mp3",
         "numero": 1
     },
-    "hoje": {
+    "estrela": {
         "audio": "rosto na TV.mp3",
         "numero": 2
     },
@@ -79,7 +79,7 @@ palavras_chave = {
         "numero": 6
     },
     "artista": {
-        "audio": "tudo bem ta na hora.mp3",
+        "audio": "semsom_.mp3",
         "numero": 7
     },
     "objetivo": {
@@ -90,7 +90,7 @@ palavras_chave = {
         "audio": "semsom_.mp3",
         "numero": 9
     },
-     "trabalho": {
+     "ativada": {
         "audio": "semsom_.mp3",
         "numero": 10
     },    
@@ -99,7 +99,7 @@ palavras_chave = {
         "audio": "semsom_.mp3",
         "numero": 11
     },
-    "forte": {
+    "gritar": {
         "audio": "semsom_.mp3",
         "numero": 12
     },
@@ -108,7 +108,7 @@ palavras_chave = {
         "numero": 13
     },
     "cumprida": {
-        "audio": "comemoração.mp3",
+        "audio": "semsom_.mp3",
         "numero": 14
     }
 }
@@ -209,6 +209,19 @@ def aceitar_conexoes():
         except OSError as erro:
             print(f"Erro ao aceitar conexão: {erro}")
 
+def receber_linha(sock):
+    dados = bytearray()
+
+    while True:
+        parte = sock.recv(1)
+
+        if not parte:
+            raise ConnectionError("Unity encerrou a conexão.")
+
+        if parte == b"\n":
+            return dados.decode("utf-8").strip()
+
+        dados.extend(parte)
 
 def enviar_comandos():
     global conexao
@@ -217,7 +230,6 @@ def enviar_comandos():
         mensagem = fila_comandos.get()
 
         while True:
-            # Aguarda uma conexão sem bloquear o reconhecimento
             evento_conexao.wait()
 
             with conexao_lock:
@@ -228,13 +240,36 @@ def enviar_comandos():
                 continue
 
             try:
+                # 1. Envia o comando ao Unity
                 socket_atual.sendall(mensagem.encode("utf-8"))
 
                 print(f"Comando enviado ao Unity: {mensagem.strip()}")
-                break
+
+                # 2. Aguarda a confirmação do Unity
+                socket_atual.settimeout(10)
+
+                resposta = receber_linha(socket_atual)
+
+                numero = int(mensagem.split(":")[1].strip())
+
+                if resposta == f"RECEBIDO:{numero}":
+
+                    print("Unity confirmou:", resposta)
+
+                    # 3. Só envia ao Arduino depois da confirmação
+                    if numero == 11 or numero == 12:
+                        enviar_arduino(numero)
+
+                    socket_atual.settimeout(None)
+                    break
+
+                else:
+                    print("Confirmação inesperada do Unity:", resposta)
+                    socket_atual.settimeout(None)
+                    break
 
             except OSError as erro:
-                print(f"Conexão perdida: {erro}")
+                print(f"Conexão perdida ou sem confirmação: {erro}")
 
                 with conexao_lock:
                     if conexao is socket_atual:
@@ -389,12 +424,6 @@ try:
 
             numero = dados_palavra["numero"]
             arquivo = dados_palavra["audio"]
-            # Envia comandos específicos ao Arduino
-            if palavra_encontrada == "habilidades":
-                enviar_arduino(11)
-
-            elif palavra_encontrada == "forte":
-                enviar_arduino(12)
 
             # 1. Coloca o comando na fila de envio ao Unity
             mensagem = f"PALAVRA:{numero}\n"
