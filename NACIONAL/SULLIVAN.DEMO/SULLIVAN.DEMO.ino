@@ -1,15 +1,8 @@
-//=====================================================================
-//  ROBÔ MECANUM - versão corrigida (andar reto com giroscópio MPU6050)
-//=====================================================================
 #include <Wire.h>
 #include <Servo.h>
 
 //============= GIROSCÓPIO =============
 const int MPU = 0x68;
-
-// TESTE ISSO PRIMEIRO (veja instruções no final do arquivo):
-// gire o robô com a mão no sentido HORÁRIO (visto de cima).
-// O "ang" no Serial tem que AUMENTAR. Se diminuir, troque para +1.
 const int SINAL_GIRO = +1;
 
 float anguloZ = 0.0;      // ângulo acumulado (graus, positivo = virou p/ direita)
@@ -18,14 +11,13 @@ float offsetGz = 0;
 unsigned long ultimoTempo;
 float rumoAlvo = 0;       // direção que o robô deve manter o tempo todo
 
-//============= CONTROLE DE RUMO =============
-float Kp = 4.0;           // PWM por grau de erro
-float Kd = 0.8;           // PWM por grau/s (usa o próprio giroscópio, sem ruído de derivada)
-const float W_MAX = 90;   // correção máxima (PWM)
-const unsigned long RAMPA_MS = 300;  // aceleração suave (evita patinar na partida)
-const int PWM_MIN_GIRO = 70;         // PWM mínimo p/ o robô conseguir girar parado
+//============= CONTROLES  =============
+float Kp = 4.0;          
+float Kd = 0.8;          
+const float W_MAX = 90;   
+const unsigned long RAMPA_MS = 300;  
+const int PWM_MIN_GIRO = 70;         
 
-// Ajuste fino de cada motor (se um for mais fraco, aumente o dele: 1.05, 1.10...)
 float fatorEF = 1.00;
 float fatorDF = 1.00;
 float fatorET = 1.00;
@@ -85,33 +77,33 @@ int16_t lerGzBruto() {
   Wire.write(0x47);
   Wire.endTransmission(false);
   Wire.requestFrom(MPU, 2, true);
-  if (Wire.available() < 2) return (int16_t)offsetGz;  // falha no I2C: ignora leitura
+  if (Wire.available() < 2) return (int16_t)offsetGz;  
   int16_t gz = Wire.read() << 8 | Wire.read();
   return gz;
 }
 
 void iniciarMPU() {
   Wire.begin();
-  Wire.setWireTimeout(3000, true);  // evita travar o Arduino se o I2C sofrer ruído dos motores
+  Wire.setWireTimeout(3000, true);  
 
-  Wire.beginTransmission(MPU);  // acorda o MPU
+  Wire.beginTransmission(MPU);  
   Wire.write(0x6B);
   Wire.write(0);
   Wire.endTransmission(true);
 
-  Wire.beginTransmission(MPU);  // filtro passa-baixa ~44 Hz (reduz vibração dos motores)
+  Wire.beginTransmission(MPU);  
   Wire.write(0x1A);
   Wire.write(0x03);
   Wire.endTransmission(true);
 
-  Wire.beginTransmission(MPU);  // escala ±250 °/s (131 LSB/°/s)
+  Wire.beginTransmission(MPU); 
   Wire.write(0x1B);
   Wire.write(0x00);
   Wire.endTransmission(true);
 
   delay(100);
 
-  // Calibração: o robô PRECISA estar parado aqui
+  
   long soma = 0;
   for (int i = 0; i < 1000; i++) {
     soma += lerGzBruto();
@@ -131,10 +123,10 @@ void atualizarGiro() {
   unsigned long agora = micros();
   float dt = (agora - ultimoTempo) / 1000000.0;
   ultimoTempo = agora;
-  if (dt > 0.1) dt = 0.1;  // segurança
+  if (dt > 0.1) dt = 0.1; 
 
   float taxa = SINAL_GIRO * (gz - offsetGz) / 131.0;
-  if (fabs(taxa) < 0.3) taxa = 0;  // zona morta: elimina deriva com o robô parado
+  if (fabs(taxa) < 0.3) taxa = 0;  
 
   taxaZ = taxa;
   anguloZ += taxa * dt;
@@ -289,7 +281,6 @@ void acionarMotor(int in1, int in2, int en, float vel, bool invertido) {
   analogWrite(en, pwm);
 }
 
-// Cinemática mecanum:
 //   vy = frente(+)/trás(-)   vx = direita(+)/esquerda(-)   w = girar p/ direita(+)
 void aplicarMecanum(float vy, float vx, float w) {
   float fl = (vy + vx + w) * fatorEF;
@@ -297,15 +288,12 @@ void aplicarMecanum(float vy, float vx, float w) {
   float rl = (vy - vx + w) * fatorET;
   float rr = (vy + vx - w) * fatorDT;
 
-  // Se alguma roda passar de 255, reduz TODAS na mesma proporção
-  // (cortar só uma roda é o que faz o robô entortar)
   float maior = max(max(fabs(fl), fabs(fr)), max(fabs(rl), fabs(rr)));
   if (maior > 255) {
     float k = 255.0 / maior;
     fl *= k; fr *= k; rl *= k; rr *= k;
   }
 
-  // Sentido "frente" de cada motor tirado do seu frente() original
   acionarMotor(motorEF1, motorEF2, enbEF, fl, true);   // EF frente = LOW/HIGH
   acionarMotor(motorDF1, motorDF2, enbDF, fr, false);  // DF frente = HIGH/LOW
   acionarMotor(motorET1, motorET2, enbET, rl, true);   // ET frente = LOW/HIGH
@@ -332,12 +320,12 @@ void pararMotores() {
 // CONTROLE DE RUMO
 //=====================================================================
 float calcularCorrecao() {
-  float erro = anguloZ - rumoAlvo;      // >0 = robô virou para a direita
-  float w = -(Kp * erro + Kd * taxaZ);  // gira no sentido contrário ao erro
+  float erro = anguloZ - rumoAlvo;      
+  float w = -(Kp * erro + Kd * taxaZ);
   return constrain(w, -W_MAX, W_MAX);
 }
 
-// Gira parado até voltar para o rumoAlvo (usado antes de cada movimento)
+
 void alinhar(unsigned long timeoutMs) {
   unsigned long t0 = millis();
   int estavel = 0;
@@ -348,11 +336,10 @@ void alinhar(unsigned long timeoutMs) {
 
     if (fabs(erro) < 1.5) {
       pararMotores();
-      if (++estavel > 30) break;  // ficou alinhado por ~100 ms
+      if (++estavel > 30) break;  
     } else {
       estavel = 0;
       float w = -(Kp * erro + Kd * taxaZ);
-      // garante força mínima para vencer o atrito das rodas
       if (w > 0 && w < PWM_MIN_GIRO) w = PWM_MIN_GIRO;
       if (w < 0 && w > -PWM_MIN_GIRO) w = -PWM_MIN_GIRO;
       w = constrain(w, -120, 120);
@@ -363,9 +350,8 @@ void alinhar(unsigned long timeoutMs) {
   pararMotores();
 }
 
-// Movimento genérico mantendo o rumo
 void mover(float vy, float vx, unsigned long tempoMs) {
-  alinhar(1500);  // se estiver torto, endireita ANTES de sair andando
+  alinhar(1500);
 
   unsigned long inicio = millis();
   unsigned long ultimoPrint = 0;
@@ -392,13 +378,13 @@ void mover(float vy, float vx, unsigned long tempoMs) {
   }
 
   pararMotores();
-  esperar(150);  // continua medindo o giro enquanto o robô assenta
+  esperar(150);
 }
 
 void frente(int velo, int tempoMs)   { mover(velo, 0, tempoMs); }
 void tras(int velo, int tempoMs)     { mover(-velo, 0, tempoMs); }
-void esquerda(int velo, int tempoMs) { mover(0, -velo, tempoMs); }  // anda de lado
-void direita(int velo, int tempoMs)  { mover(0, velo, tempoMs); }   // anda de lado
+void esquerda(int velo, int tempoMs) { mover(0, -velo, tempoMs); } 
+void direita(int velo, int tempoMs)  { mover(0, velo, tempoMs); }   
 
 //=====================================================================
 // CALCULAR TEMPO
@@ -428,7 +414,6 @@ void setup() {
   Serial.begin(115200);
   Serial2.begin(9600);  // Comunicação com a ESP B
 
-  // Motores primeiro e PARADOS (antes os pinos ficavam soltos durante a calibração)
   pinMode(motorEF1, OUTPUT);
   pinMode(motorEF2, OUTPUT);
   pinMode(motorDF1, OUTPUT);
@@ -465,11 +450,11 @@ void setup() {
   pinMode(ECHO, INPUT);
   meuServo.attach(servo);
   meuServo.write(90);
-  delay(500);  // espera o servo parar antes de calibrar
+  delay(500);
 
   // Calibra com tudo parado
   iniciarMPU();
-  rumoAlvo = anguloZ;  // a direção inicial é a direção que o robô vai manter
+  rumoAlvo = anguloZ;
   Serial.println("MPU pronto!");
 
   pinMode(20, INPUT);
@@ -546,15 +531,3 @@ void loop() {
     }
   }
 }
-
-/*=====================================================================
-  COMO TESTAR / AJUSTAR
-  1) SINAL DO GIROSCÓPIO: com o robô ligado e motores sem força, gire o
-     robô com a mão no sentido horário. "ang" deve AUMENTAR. Se diminuir,
-     troque SINAL_GIRO para +1. Sinal errado = robô gira sem parar.
-  2) Kp: se ainda entorta devagar, aumente (5, 6...). Se fica balançando
-     de um lado pro outro, diminua Kp ou aumente Kd.
-  3) fatorXX: se mesmo com o giro corrigindo o robô "derrapa" de lado,
-     algum motor é mais fraco. Aumente o fator dele (ex: 1.08).
-  4) O MPU tem que estar preso no CHASSI, não no tronco que gira.
-=====================================================================*/
