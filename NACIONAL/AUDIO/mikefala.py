@@ -23,6 +23,31 @@ PASTA_AUDIOS = r"C:\Users\Aluno\Documents\GitHub\ONSTAGE-26-27\NACIONAL\AUDIO\AU
 CAMINHO_MODELO = r"C:\Users\Aluno\Documents\GitHub\ONSTAGE-26-27\NACIONAL\AUDIO\vosk-model-small-pt-0.3"
 
 # ==========================================
+# AJUSTES DO RECONHECIMENTO
+# ==========================================
+
+# Tamanho de cada pedaço de áudio. Menor = reage mais rápido.
+# 4000 amostras = 0,25 s (antes era 8000 = 0,5 s)
+TAMANHO_BLOCO = 4000
+
+# Depois que o Mike fala, joga fora o que o microfone ouviu durante a fala
+# (evita ele "ouvir a própria voz" e disparar de novo).
+IGNORAR_AUDIO_DURANTE_FALA = True
+
+# Opcional: faz o Vosk procurar SÓ as palavras-chave (o resto vira [unk]).
+# Deixa o reconhecimento das palavras mais rápido e preciso.
+# Se alguma palavra parar de ser reconhecida, volte para False.
+USAR_GRAMATICA = False
+
+# Palavras escritas COM acento, do jeito que estão no modelo do Vosk
+# (só é usado se USAR_GRAMATICA = True)
+PALAVRAS_GRAMATICA = [
+    "primeiro", "estrela", "mamãe", "comigo", "galera", "respeito",
+    "artista", "objetivo", "crachá", "ativada", "habilidades",
+    "gritar", "funcionou", "cumprida",
+]
+
+# ==========================================
 # CONFIGURAÇÃO DO ARDUINO
 # ==========================================
 
@@ -61,22 +86,13 @@ palavras_chave = {
         "audio": "rosto na TV.mp3",
         "numero": 2
     },
-    "mamae": {
+    "mae": {
         "audio": "ofende, mas não assassina o português.mp3",
         "numero": 3
-        
     },
-     "comigo": {
+    "comigo": {
         "audio": "seboso.mp3",
-        "numero": 4   
-    },
-    "galera": {
-        "audio": "ze mané.mp3",
-        "numero": 5
-    },
-    "respeito": {
-        "audio": "bom dia assustar.mp3",
-        "numero": 6
+        "numero": 4
     },
     "artista": {
         "audio": "semsom_.mp3",
@@ -86,20 +102,15 @@ palavras_chave = {
         "audio": "semsom_.mp3",
         "numero": 8
     },
-     "cracha": {
-        "audio": "semsom_.mp3",
-        "numero": 9
-    },
-     "ativada": {
+    "ativada": {
         "audio": "semsom_.mp3",
         "numero": 10
-    },    
-   
+    },
     "habilidades": {
         "audio": "semsom_.mp3",
         "numero": 11
     },
-    "gritar": {
+    "tres": {
         "audio": "semsom_.mp3",
         "numero": 12
     },
@@ -209,6 +220,7 @@ def aceitar_conexoes():
         except OSError as erro:
             print(f"Erro ao aceitar conexão: {erro}")
 
+
 def receber_linha(sock):
     dados = bytearray()
 
@@ -222,6 +234,7 @@ def receber_linha(sock):
             return dados.decode("utf-8").strip()
 
         dados.extend(parte)
+
 
 def enviar_comandos():
     global conexao
@@ -283,10 +296,10 @@ def enviar_comandos():
 
                 print("Aguardando o Unity se reconectar...")
 
+
 # ==========================================
 # ENVIO DE COMANDOS AO ARDUINO
 # ==========================================
-
 
 def enviar_arduino(comando):
     if arduino is None or not arduino.is_open:
@@ -346,7 +359,13 @@ for dados_palavra in palavras_chave.values():
 pygame.mixer.init()
 
 modelo = Model(CAMINHO_MODELO)
-reconhecedor = KaldiRecognizer(modelo, 16000)
+
+if USAR_GRAMATICA:
+    gramatica = json.dumps(PALAVRAS_GRAMATICA + ["[unk]"], ensure_ascii=False)
+    reconhecedor = KaldiRecognizer(modelo, 16000, gramatica)
+    print("Modo gramática: procurando só as palavras-chave.")
+else:
+    reconhecedor = KaldiRecognizer(modelo, 16000)
 
 fila_audio = queue.Queue()
 
@@ -356,6 +375,38 @@ def callback(indata, frames, time_info, status):
         print(f"Áudio: {status}")
 
     fila_audio.put(bytes(indata))
+
+
+def limpar_audio_acumulado():
+    """Descarta o áudio que chegou enquanto o Mike estava falando."""
+    while True:
+        try:
+            fila_audio.get_nowait()
+        except queue.Empty:
+            break
+    reconhecedor.Reset()
+
+
+# ==========================================
+# DISPARO DE UMA PALAVRA
+# ==========================================
+
+def disparar_palavra(palavra):
+    dados_palavra = palavras_chave[palavra]
+
+    numero = dados_palavra["numero"]
+    arquivo = dados_palavra["audio"]
+
+    print(f">>> Palavra reconhecida: {palavra}")
+
+    # 1. Coloca o comando na fila de envio ao Unity
+    mensagem = f"PALAVRA:{numero}\n"
+    fila_comandos.put(mensagem)
+    print("COMANDO COLOCADO NA FILA:", repr(mensagem))
+
+    # 2. Reproduz o áudio depois de enfileirar o comando
+    if arquivo is not None:
+        reproduzir_audio(arquivo)
 
 
 # ==========================================
@@ -379,14 +430,17 @@ print(f"Servidor aguardando Unity na porta {PORTA}...")
 
 # ==========================================
 # RECONHECIMENTO CONTÍNUO DE VOZ
+# (agora reconhece no MEIO da frase)
 # ==========================================
 
-ultima_palavra = None
+ultima_palavra = None        # última palavra disparada na frase ANTERIOR
+disparadas_na_frase = set()  # palavras já disparadas na frase ATUAL
+parcial_anterior = []        # palavras do resultado parcial anterior
 
 try:
     with sd.RawInputStream(
         samplerate=16000,
-        blocksize=8000,
+        blocksize=TAMANHO_BLOCO,
         dtype="int16",
         channels=1,
         callback=callback
@@ -394,51 +448,67 @@ try:
         while True:
             dados = fila_audio.get()
 
-            if not reconhecedor.AcceptWaveform(dados):
-                continue
+            frase_terminou = reconhecedor.AcceptWaveform(dados)
 
-            resultado = json.loads(reconhecedor.Result())
-            fala = normalizar(resultado.get("text", ""))
+            if frase_terminou:
+                # ----- Frase completa (resultado final) -----
+                resultado = json.loads(reconhecedor.Result())
+                palavras = normalizar(resultado.get("text", "")).split()
 
-            if not fala:
-                ultima_palavra = None
-                continue
+                if palavras:
+                    print("Você disse:", " ".join(palavras))
 
-            print("Você disse:", fala)
+                # No resultado final todas as palavras são confiáveis
+                candidatas = palavras
 
-            palavra_encontrada = None
+            else:
+                # ----- Frase ainda em andamento (resultado parcial) -----
+                resultado = json.loads(reconhecedor.PartialResult())
+                palavras = normalizar(resultado.get("partial", "")).split()
 
-            for palavra in palavras_chave:
-                if palavra in fala.split():
-                    palavra_encontrada = palavra
+                if palavras and palavras != parcial_anterior:
+                    print("  ouvindo:", " ".join(palavras))
+
+                # A última palavra do parcial ainda pode mudar
+                # (ex.: "prime..." virar "primeira"). Só confia nela
+                # se ela já apareceu no parcial anterior.
+                candidatas = palavras[:-1]
+                if palavras and palavras[-1] in parcial_anterior:
+                    candidatas = palavras
+
+                parcial_anterior = palavras
+
+            # ----- Procura palavra-chave ainda não disparada -----
+            palavra_disparada = None
+
+            for palavra in candidatas:
+                if (palavra in palavras_chave
+                        and palavra not in disparadas_na_frase
+                        and palavra != ultima_palavra):
+                    palavra_disparada = palavra
                     break
 
-            if palavra_encontrada is None:
-                ultima_palavra = None
+            if palavra_disparada is not None:
+                disparadas_na_frase.add(palavra_disparada)
+                disparar_palavra(palavra_disparada)
+
+                if IGNORAR_AUDIO_DURANTE_FALA:
+                    # Começa uma "frase nova" depois que o Mike falou
+                    limpar_audio_acumulado()
+                    ultima_palavra = palavra_disparada
+                    disparadas_na_frase = set()
+                    parcial_anterior = []
                 continue
 
-            if palavra_encontrada == ultima_palavra:
-                continue
+            if frase_terminou:
+                # Frase acabou sem palavra nova: libera repetir a última
+                if not disparadas_na_frase:
+                    ultima_palavra = None
+                else:
+                    ultima_palavra = list(disparadas_na_frase)[-1]
 
-            dados_palavra = palavras_chave[palavra_encontrada]
-
-            numero = dados_palavra["numero"]
-            arquivo = dados_palavra["audio"]
-
-            # 1. Coloca o comando na fila de envio ao Unity
-            mensagem = f"PALAVRA:{numero}\n"
-            fila_comandos.put(mensagem)
-            print("COMANDO COLOCADO NA FILA:", repr(mensagem))
-
-            print(f"Comando preparado para o Unity: {numero}")
-
-            # 2. Reproduz o áudio depois de enfileirar o comando
-            if arquivo is not None:
-                reproduzir_audio(arquivo)
-
-            print(f"Palavra reconhecida: {palavra_encontrada}")
-
-            ultima_palavra = palavra_encontrada
+                disparadas_na_frase = set()
+                parcial_anterior = []
 
 except KeyboardInterrupt:
     print("\nPrograma encerrado pelo usuário.")

@@ -41,8 +41,8 @@ float Kd = 0.6;            // agora em cima da velocidade de giro (sinal certo)
 const float CORRECAO_MAX = 45;
 
 float KpCurva = 3.0;
-const int VEL_MAX_CURVA = 150;     // igual ao início da sua curva
-const int VEL_MIN_CURVA = 100;     // igual ao fim da sua curva
+const int VEL_MAX_CURVA = 170;     // igual ao início da sua curva
+const int VEL_MIN_CURVA = 120;     // igual ao fim da sua curva
 const float TOLERANCIA_CURVA = 2.0;
 const unsigned long TIMEOUT_CURVA = 5000;
 
@@ -79,12 +79,12 @@ unsigned long ultimoShow = 0;
 // ======================================
 // VELOCIDADES E TEMPOS DA MISSÃO
 // ======================================
-const int velocidadeBase = 90;           // etapa 1 (procurando branco)
-const int velocidadeAntesCurva = 85;     // reta depois do branco
-const int velocidadeDepoisCurva = 70;    // etapa 2 (cores)
+const int velocidadeBase = 85;           // etapa 1 (procurando branco)
+const int velocidadeAntesCurva = 90;     // reta depois do branco
+const int velocidadeDepoisCurva = 110;    // etapa 2 (cores)
 
 const unsigned long TEMPO_IGNORAR_BRANCO = 15000;  // substitui o "rept > 150"
-const unsigned long tempoAntesDaCurva = 7300;
+const unsigned long tempoAntesDaCurva = 7000;
 const float anguloCurva = 90.0;
 const unsigned long tempoExtra = 2000;
 
@@ -213,6 +213,12 @@ void acionarMotor(int in1, int in2, int en, int vel) {
 }
 
 // esq/dir: -255..255 (positivo = para frente)
+void acionarGiro(int esq, int dir) {
+  acionarMotor(INF1, INF2, ENAF, esq);  // dianteiro esquerdo
+  acionarMotor(INT1, INT2, ENAT, dir);  // traseiro esquerdo
+  acionarMotor(INF3, INF4, ENBF, dir);  // dianteiro direito
+  acionarMotor(INT3, INT4, ENBT, esq);  // traseiro direito
+}
 void acionar(int esq, int dir) {
   acionarMotor(INF1, INF2, ENAF, esq);  // dianteiro esquerdo
   acionarMotor(INT1, INT2, ENAT, esq);  // traseiro esquerdo
@@ -271,8 +277,8 @@ void girar(float graus) {
       alinhado = 0;
       // rápido longe do alvo, devagar perto (como o seu map 150 -> 100)
       int vel = constrain(fabs(falta) * KpCurva, VEL_MIN_CURVA, VEL_MAX_CURVA);
-      if (falta > 0) acionar(-vel, vel);   // esquerda p/ trás, direita p/ frente
-      else acionar(vel, -vel);             // passou do ponto: volta
+      if (falta > 0) acionarGiro(-vel, vel);   // esquerda p/ trás, direita p/ frente
+      else acionarGiro(vel, -vel);             // passou do ponto: volta
     }
     delay(3);
   }
@@ -589,14 +595,3 @@ void loop() {
 
   atualizarLeds();
 }
-
-/*=====================================================================
-  COMO TESTAR
-  1) Gire o robô com a mão para a ESQUERDA: "ang" tem que aumentar.
-     Se diminuir, SINAL_GIRO = -1.
-  2) Curva passando do ponto: diminua VEL_MAX_CURVA ou KpCurva.
-     Parando antes e "zumbindo": aumente VEL_MIN_CURVA.
-  3) Cores: sensor sobre a cor na altura real, mande 'c', copie a linha.
-     Faça o mesmo com o chão e descomente a linha CHAO.
-  4) TEMPO_IGNORAR_BRANCO = 15 s equivale ao seu "rept > 150". Ajuste.
-=====================================================================*/
